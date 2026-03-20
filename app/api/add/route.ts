@@ -13,7 +13,7 @@ export async function POST(req: Request) {
   // Check if song already exists
   const existingSong = db
     .prepare(`SELECT id FROM songs WHERE spotify_id=?`)
-    .get(spotify_id) as any;
+    .get(spotify_id) as { id: string };
 
   if (existingSong) {
     // Check if this device already voted for the song
@@ -44,9 +44,14 @@ export async function POST(req: Request) {
   }
 
   // Check queue size
-  const count = db.prepare(`SELECT COUNT(*) as c FROM songs`).get().c;
+  const row = db.prepare(`SELECT COUNT(*) as c FROM songs`).get() as {
+    c: number;
+  };
+  const count = row.c;
 
-  if (count >= (process.env.MAX_REQESTED_SONGS ?? 10)) {
+  const MAX = Number(process.env.MAX_REQUESTED_SONGS ?? 10);
+
+  if (count >= MAX) {
     return Response.json({ error: "queue_full" }, { status: 400 });
   }
 
