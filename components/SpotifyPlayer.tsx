@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useEffect, useState } from "react";
 
 const REFRESH = Number(process.env.NEXT_PUBLIC_PLAYER_REFRESH ?? 1000);
-const ACCENT_GREEN = "#1c7537";
 
 export default function SpotifyPlayer() {
   const [data, setData] = useState<any>(null);

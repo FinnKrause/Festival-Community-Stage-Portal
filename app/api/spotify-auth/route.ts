@@ -1,4 +1,4 @@
-export async function GET(req: Request) {
+export async function GET() {
   const client_id = process.env.SPOTIFY_CLIENT_ID!;
   const redirect_uri = encodeURIComponent(process.env.SPOTIFY_REDIRECT_URI!);
 

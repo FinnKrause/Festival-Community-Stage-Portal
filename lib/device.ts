@@ -12,32 +12,34 @@ export function getDeviceId(): string {
 }
 
 function generateUUID(): string {
-  if (typeof crypto !== "undefined") {
-    if ("randomUUID" in crypto) {
-      return crypto.randomUUID();
+  if (typeof window !== "undefined" && window.crypto) {
+    const cryptoObj = window.crypto as Crypto;
+
+    // Use randomUUID if available
+    if (typeof cryptoObj.randomUUID === "function") {
+      return cryptoObj.randomUUID();
     }
 
-    if ("getRandomValues" in crypto) {
-      const buf = new Uint8Array(16);
-      crypto.getRandomValues(buf);
+    // Use getRandomValues fallback
+    const buf = new Uint8Array(16);
+    cryptoObj.getRandomValues(buf);
 
-      buf[6] = (buf[6] & 0x0f) | 0x40;
-      buf[8] = (buf[8] & 0x3f) | 0x80;
+    buf[6] = (buf[6] & 0x0f) | 0x40;
+    buf[8] = (buf[8] & 0x3f) | 0x80;
 
-      const hex = [...buf].map((b) => b.toString(16).padStart(2, "0"));
+    const hex = Array.from(buf).map((b) => b.toString(16).padStart(2, "0"));
 
-      return (
-        hex.slice(0, 4).join("") +
-        "-" +
-        hex.slice(4, 6).join("") +
-        "-" +
-        hex.slice(6, 8).join("") +
-        "-" +
-        hex.slice(8, 10).join("") +
-        "-" +
-        hex.slice(10, 16).join("")
-      );
-    }
+    return (
+      hex.slice(0, 4).join("") +
+      "-" +
+      hex.slice(4, 6).join("") +
+      "-" +
+      hex.slice(6, 8).join("") +
+      "-" +
+      hex.slice(8, 10).join("") +
+      "-" +
+      hex.slice(10, 16).join("")
+    );
   }
 
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {

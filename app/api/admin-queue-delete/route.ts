@@ -6,7 +6,9 @@ export async function POST(req: Request) {
   const { id } = await req.json();
   if (!id) return Response.json({ error: "missing id" }, { status: 400 });
 
-  const song = db.prepare(`SELECT spotify_id FROM songs WHERE id=?`).get(id);
+  const song = db
+    .prepare(`SELECT spotify_id FROM songs WHERE id=?`)
+    .get(id) as { spotify_id: string | number };
   if (!song) return Response.json({ error: "song not found" }, { status: 404 });
 
   try {

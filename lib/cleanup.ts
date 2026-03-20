@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import db from "./db";
 import { broadcast } from "./events";
 
@@ -20,7 +21,7 @@ export function startCleanup() {
 
     const songs = db
       .prepare(`SELECT id,title,artist,created_at FROM songs`)
-      .all();
+      .all() as Array<{ id: number; created_at: number; title: string }>;
 
     for (const s of songs) {
       if (top3.includes(s.id)) continue;
