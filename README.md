@@ -152,4 +152,4 @@ The app runs on port `3000` internally — expose it via a reverse proxy.
 **Organization:** Built for FSI WiSo events (independent project, not officially affiliated)  
 **Source:** [github.com/FinnKrause/Festival-Community-Stage-Portal](https://github.com/FinnKrause/Festival-Community-Stage-Portal)
 
-**License** View LICENSE.md file
+**License:** View LICENSE.md file
