@@ -1,28 +1,32 @@
 # Festival Community Stage Portal
 
-**A live song request system for parties and events** — let attendees suggest tracks without interrupting the DJ. Requests go into a voting pool, and the admin (DJ/organizer) can approve and queue them directly to Spotify.
+**A live, interactive song suggestion system for parties and events** — bridging the gap between the DJ and the crowd without interrupting the flow of music.
 
-> Built by [Finn Krause](https://github.com/FinnKrause) for [FSI WiSo](https://fsi-wiso.de) events. The university group uses it but is not involved in development.
+> Built by [Finn Krause](https://github.com/FinnKrause) for [FSI WiSo](https://fsi-wiso.de) events. The university group uses this tool but is not involved in development.
 
 ---
 
-## 🎯 The Problem It Solves
+## 🎯 The Idea
 
-DJs constantly get interrupted by song requests. This portal lets attendees submit and vote on tracks **without talking to the DJ**. The admin sees ranked requests and can queue approved songs directly to Spotify with one click — keeping the DJ focused on mixing, not managing requests.
+Imagine this: A QR code on stage, at the bar, or on every table. Attendees scan it with their phones, open the portal, and suddenly — they're part of the musical experience. They see what's playing right now, suggest tracks they'd love to hear, and vote on what others have suggested.
+
+The DJ doesn't have to play everything that gets requested. That's not the point. The point is to **get a feel for what the crowd is vibing with**, to spot emerging trends, and to let those suggestions inspire the set. When a song starts getting votes, you know people are excited about it. When you play it, the crowd feels heard — because they were part of the conversation.
+
+No one needs to fight their way to the DJ booth. No shouting requests over the music. Just a simple, elegant way to let the crowd shape the atmosphere while the DJ stays focused on mixing and reading the room.
 
 ---
 
 ## 👥 For the Crowd
 
-**What attendees can do:**
+**What attendees experience:**
 
-- 🎵 **See what's playing** — currently playing track displayed prominently
-- 🔍 **Suggest any song** — search Spotify and add to the voting pool, no matter where you are in the crowd
+- 🎵 **See what's playing** — the current track is displayed prominently so everyone knows what's on
+- 🔍 **Suggest any song** — search Spotify and add to the suggestion pool, no matter where you're standing
 - 👍 **Vote with friends** — gather your crew to upvote your suggestions and push them up the leaderboard
-- 📊 **Watch the leaderboard** — see real-time which tracks are gaining momentum
-- ⏱️ **Track expiration** — songs outside the top 3 disappear after 30 minutes to keep the queue fresh
+- 📊 **Watch the leaderboard** — see in real-time which tracks are gaining momentum
+- ⏱️ **Fresh suggestions only** — songs outside the top 3 expire after 30 minutes to keep the list relevant
 
-**The experience:** Everyone participates. The crowd collectively decides what they want to hear. No one needs to fight their way to the DJ booth.
+**The experience:** Everyone participates. The crowd collectively signals what they want to hear. No one needs to interrupt the DJ.
 
 ---
 
@@ -30,14 +34,25 @@ DJs constantly get interrupted by song requests. This portal lets attendees subm
 
 **Admin Dashboard** (`/admin`)
 
-- 👁️ **Live overview** — see all requests sorted by votes
-- ✅ **One-click approve** — approved songs go directly to Spotify queue
-- 🗑️ **Remove unwanted** — delete troll or inappropriate requests instantly
+- 👁️ **Live overview** — see all suggestions sorted by votes
+- ✅ **One-click approval** — approved songs go directly to Spotify queue
+- 🗑️ **Remove unwanted** — delete suggestions that don't fit the vibe
 - 📝 **Server logs** — real-time activity feed
 - 📊 **Viewer count** — see how many people are participating
 - 🎵 **Spotify controls** — view currently playing and next 3 tracks
 
 **Requirements:** Admin needs a Spotify Premium account to control playback.
+
+---
+
+## 🚀 Technical Highlights
+
+The app is designed to be **lightweight and efficient**:
+
+- **Minimal server load** — album art, track data, and all media assets are loaded directly from Spotify's CDN, not proxied through the server
+- **Real-time updates via SSE** — no constant polling, just lightweight server-sent events when things change
+- **Local-first voting** — device IDs stored in localStorage prevent vote spam without server-side sessions
+- **SQLite for simplicity** — no external database dependencies, everything contained in a single file
 
 ---
 
@@ -70,9 +85,9 @@ DJs constantly get interrupted by song requests. This portal lets attendees subm
 
 ### 2. Configure Environment
 
-`bash
+```bash
 cp .env.example .env.local
-`
+```
 
 | Variable                | Value                                         |
 | ----------------------- | --------------------------------------------- |
@@ -85,16 +100,13 @@ cp .env.example .env.local
 
 ### 3. Deploy with Docker
 
-`bash
-
-# Build
-
+```bash
+# Build the image
 docker build -t festival-portal .
 
 # Run with docker-compose
-
 docker-compose up -d
-`
+```
 
 The app runs on port `3000` internally — expose it via a reverse proxy.
 
@@ -112,11 +124,12 @@ The app runs on port `3000` internally — expose it via a reverse proxy.
 
 ## 📊 How It Works (Behind the Scenes)
 
-1. **Attendee requests a song** → stored in SQLite with 1 vote (device ID prevents double-voting)
-2. **Friends vote together** → votes accumulate, pushing songs up the leaderboard
-3. **Real-time updates** → leaderboard refreshes via SSE for everyone
-4. **DJ approves in dashboard** → song added to Spotify's active queue via API
-5. **Auto-cleanup** → songs outside top 3 expire after timeout (keeps the list relevant)
+1. **Attendee scans QR code** → opens the portal on their phone
+2. **Suggests a song** → stored in SQLite with 1 vote, device ID prevents spam
+3. **Friends vote together** → votes accumulate, pushing songs up the leaderboard
+4. **Real-time updates** → leaderboard refreshes via SSE for everyone simultaneously
+5. **DJ approves in dashboard** → song added to Spotify's active queue via API
+6. **Auto-cleanup** → songs outside top 3 expire after timeout, keeping the list fresh
 
 **Database Schema:**
 
@@ -133,15 +146,6 @@ The app runs on port `3000` internally — expose it via a reverse proxy.
 
 ---
 
-## 🎨 Customization for Your Event
-
-- **Logo:** Replace `/public/FSI-Logo2.png`
-- **Color:** Change `ACCENT_GREEN` in `app/page.tsx` and `app/admin/page.tsx`
-- **Event name:** Edit "WiWi '26 LIVE" in header
-- **Queue size:** Adjust `MAX_REQUESTED_SONGS` in `.env`
-
----
-
 ## 📄 License & Credits
 
 **Author:** Finn Krause ([mail@finnkrause.com](mailto:mail@finnkrause.com))  
@@ -151,5 +155,5 @@ The app runs on port `3000` internally — expose it via a reverse proxy.
 ---
 
 <p align="center">
- Made with ❤️ by Finn Krause
+  Made with 🎵 by Finn Krause
 </p>
