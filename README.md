@@ -1,263 +1,160 @@
 # Festival Community Stage Portal
 
-[![Next.js](https://img.shields.io/badge/Next.js-16.1.6-black)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
-[![SQLite](https://img.shields.io/badge/SQLite-better--sqlite3-green)](https://github.com/WiseLibs/better-sqlite3)
-[![Spotify API](https://img.shields.io/badge/Spotify-API-1DB954)](https://developer.spotify.com/)
+**A live song request system for parties and events** — let attendees suggest tracks without interrupting the DJ. Requests go into a voting pool, and the admin (DJ/organizer) can approve and queue them directly to Spotify.
 
-**live, interactive song request system** for festivals and events — empowering attendees to shape the soundtrack of the night. Built for **WiWi '26** by the [FSI WiSo](https://fsi-wiso.de) team (independent community project).
-
-<p align="center">
-  <img src="/public/FSI-Logo2.png" alt="FSI WiSo Logo" width="150" />
-</p>
-
-## 📋 Overview
-
-Festival Community Stage Portal transforms the traditional DJ booth into a collaborative experience. Attendees can request songs, vote on upcoming tracks, and watch the live leaderboard update in real-time — all while the admin panel provides full control over the Spotify playback queue.
-
-**Live Demo Context:** This implementation was purpose-built for the WiWi '26 festival and is maintained by [Finn K.](https://github.com/FinnKrause) as a contribution to the FSI WiSo community.
+> Built by [Finn Krause](https://github.com/FinnKrause) for [FSI WiSo](https://fsi-wiso.de) events. The university group uses it but is not involved in development.
 
 ---
 
-## ✨ Features
+## 🎯 The Problem It Solves
 
-### 🎵 **Public Song Request Interface**
-
-- **Spotify Search** — Search tracks via Spotify's catalog
-- **One-Click Requests** — Add songs to the voting pool (queue capacity: 20-30 songs)
-- **Real-Time Leaderboard** — Sorted by votes, showing time remaining until expiration
-- **Device-Based Voting** — Each device can vote once per song (prevents spam)
-- **Auto-Expiration** — Songs outside the top 3 expire after 30 minutes (configurable)
-
-### 🎛️ **Admin Dashboard** (Protected Route)
-
-- **Full Queue Management** — View all requests with vote counts
-- **Direct Spotify Integration** — Queue songs to Spotify's active player
-- **Delete Inappropriate Requests** — Remove unwanted songs instantly
-- **Live Server Logs** — Real-time monitoring with auto-scroll
-- **Viewer Count** — See how many people are currently using the portal
-
-### 🔊 **Spotify Integration**
-
-- **Now Playing Display** — Shows current track with album art
-- **Upcoming Queue Preview** — Next 3 songs in Spotify's queue
-- **Automatic Refresh** — Configurable polling intervals
-- **Token Management** — Client credentials + user OAuth token handling
-
-### ⚡ **Real-Time Updates**
-
-- **Server-Sent Events (SSE)** — Live ranking updates without polling
-- **Heartbeat System** — Prevents disconnects on Safari and mobile browsers
-- **Broadcast Logs** — Admin sees server activity in real-time
+DJs constantly get interrupted by song requests. This portal lets attendees submit and vote on tracks **without talking to the DJ**. The admin sees ranked requests and can queue approved songs directly to Spotify with one click — keeping the DJ focused on mixing, not managing requests.
 
 ---
 
-## 🏗️ Architecture
+## ⚡ Core Features
 
-```
-     ┌──────────────────┐     ┌─────────────────┐
-   Public User   │────▶│   Next.js App    │────▶│   SQLite DB     │
-  (Browser via   │     │  (Server Actions │     │  (Songs/Requests│
-   Reverse Proxy)│     │   + API Routes)  │     │   + Votes)      │
-     └──────────────────┘     └─────────────────┘
-        │                        │                         │
-        │                        ▼                         │
-        │               ┌──────────────────┐               │
-        └──────────────▶│   Spotify API    │◀──────────────┘
-                        │  (Search/Queue/  │
-                        │   Player State)  │
-                        └──────────────────┘
-                               ▲
-                               │
-                        ┌──────┴──────┐
-                        │ Admin Panel │
-                        │ (OAuth Flow)│
-                        └─────────────┘
-```
+**Public Interface**
+
+- Search Spotify and request songs
+- Vote on pending requests (1 vote per device per song)
+- Live leaderboard showing top requests
+- Auto-expiration: songs outside top 3 expire after 30min
+
+**Admin Dashboard** (`/admin`)
+
+- View all requests sorted by votes
+- Approve songs → added directly to Spotify queue
+- Delete unwanted requests
+- Live server logs and viewer count
+
+**Spotify Integration**
+
+- Shows currently playing track + next 3 songs
+- Admin pushes approved songs directly to Spotify
+- Requires Spotify Premium account for admin
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Category                | Technology                                |
-| ----------------------- | ----------------------------------------- |
-| **Framework**           | Next.js 16 (App Router)                   |
-| **Language**            | TypeScript                                |
-| **Database**            | SQLite with better-sqlite3                |
-| **Styling**             | Tailwind CSS                              |
-| **Real-Time**           | Server-Sent Events (SSE)                  |
-| **Spotify Integration** | Web API (Client Credentials + User OAuth) |
-| **Deployment**          | Docker + Reverse Proxy (nginx/Caddy)      |
-| **Utilities**           | use-debounce, ws (WebSocket for dev)      |
+- **Next.js 16** (App Router, TypeScript)
+- **SQLite** (better-sqlite3)
+- **Tailwind CSS**
+- **Spotify Web API**
+- **Server-Sent Events** for real-time updates
+- **Docker** deployment
 
 ---
 
-## 📦 Installation & Setup
+## 🚀 Deployment & Setup
 
 ### Prerequisites
 
-- Node.js 20+ or Docker
-- Spotify Developer Account (for API credentials)
+- Docker (or Node.js 20+ for local dev)
+- Spotify Developer account
 - Reverse proxy (nginx/Caddy) for SSL and admin route protection
 
-### Local Development
+### 1. Get Spotify Credentials
 
-. **Clone the repository**
+1. Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
+2. Create a new app → get `Client ID` and `Client Secret`
+3. Add redirect URI: `https://yourdomain.com/api/spotify-callback`
+4. **Important:** In your Spotify app settings, add the admin's Spotify email(s) to "Users and Access" → otherwise the OAuth login will fail
+5. See [Spotify's OAuth docs](https://developer.spotify.com/documentation/web-api/tutorials/code-pkce-flow) for details
+
+### 2. Configure Environment
 
 ```bash
-git clone https://github.com/FinnKrause/Festival-Community-Stage-Portal.git
-cd Festival-Community-Stage-Portal
+cp .env.example .env
 ```
 
-. **Install dependencies**
+| Variable                | Value                                         |
+| ----------------------- | --------------------------------------------- |
+| `SPOTIFY_CLIENT_ID`     | From Spotify Dashboard                        |
+| `SPOTIFY_CLIENT_SECRET` | From Spotify Dashboard                        |
+| `SPOTIFY_REDIRECT_URI`  | `https://yourdomain.com/api/spotify-callback` |
+| `NEXT_PUBLIC_APP_URL`   | `https://yourdomain.com`                      |
+| `MAX_REQUESTED_SONGS`   | Recommended: `25`                             |
+| `SONG_TIMEOUT`          | `1800000` (30 min)                            |
+
+### 3. Deploy with Docker
 
 ```bash
-npm install
-```
+# Build
+docker build -t festival-portal .
 
-. **Set up environment variables**
-
-```bash
-cp .env.example .env.local
-```
-
-Fill in your Spotify credentials (see [Environment Variables](#environment-variables)).
-
-. **Run the development server**
-
-```bash
-npm run dev
-```
-
-The app will be available at `http://localhost:3000`
-
-. **Initialize the admin session**
-
-- Navigate to `/admin` and click "Spotify Login"
-- Authorize the application to manage your Spotify playback
-
-### Docker Deployment
-
-. **Build the Docker image**
-
-```bash
-docker build -t festival-stage-portal .
-```
-
-. **Run with docker-compose**
-
-```bash
+# Run with docker-compose
 docker-compose up -d
 ```
 
-. **Configure reverse proxy** for SSL termination and admin route protection
+The app runs on port `3000` internally — expose it via reverse proxy.
+
+### 4. Secure the Admin Route
+
+**This project has no built-in admin auth.** Protect `/admin` at the proxy level:
+
+- Use **HTTP Basic Auth** with nginx/Caddy
+- Or integrate **Authentik/Authelia** for SSO
+- Never expose `/admin` publicly without authentication
+
+**Spotify token security:** Admin tokens are stored in memory only (not persisted), auto-refreshed via refresh token flow.
 
 ---
 
-## 🔧 Environment Variables
+## 📁 What Happens Under the Hood
 
-| Variable                     | Description                | Example                                       |
-| ---------------------------- | -------------------------- | --------------------------------------------- |
-| `SPOTIFY_CLIENT_ID`          | Spotify App Client ID      | `abc123...`                                   |
-| `SPOTIFY_CLIENT_SECRET`      | Spotify App Client Secret  | `xyz789...`                                   |
-| `SPOTIFY_REDIRECT_URI`       | OAuth callback URL         | `https://yourdomain.com/api/spotify-callback` |
-| `NEXT_PUBLIC_APP_URL`        | Public app URL (for OAuth) | `https://yourdomain.com`                      |
-| `SONG_TIMEOUT`               | Song expiration in ms      | `1800000` (30 min)                            |
-| `SPOTIFY_REFRESH_INTERVAL`   | Player state refresh (ms)  | `5000`                                        |
-| `NEXT_PUBLIC_PLAYER_REFRESH` | Client player refresh (ms) | `10000`                                       |
-| `MAX_REQUESTED_SONGS`        | Max queue size             | `25`                                          |
+1. **User requests song** → stored in SQLite with 1 vote (device ID prevents double-voting)
+2. **Votes accumulate** → leaderboard updates via SSE in real-time
+3. **Admin approves** → song added to Spotify's active queue via API
+4. **Auto-cleanup** → songs outside top 3 expire after timeout (prevents stale requests)
 
----
+**Database Schema:**
 
-## 🔒 Secure the Admin Route
-
-project **does not include built-in authentication** for the admin panel. For production use:
-
-. **Place the entire app behind a reverse proxy** (nginx, Caddy, Traefik)
-. **Configure authentication at the proxy level** for the `/admin` route
-. **Recommended:** Use Authentik, Authelia, or HTTP Basic Auth with strong credentials
-
-### Spotify Token Security
-
-- Client credentials are stored as environment variables (never exposed to client)
-- User OAuth tokens are stored in memory (not persisted to database)
-- Token refresh happens automatically via the refresh token flow
+- `songs`: id, spotify_id, title, artist, cover_url, votes, created_at, device_id
+- `requests`: tracks which devices voted for which songs (prevents duplicate votes)
 
 ---
 
-## 🚀 Deployment Recommendations
+## 🔧 API Routes (Key Ones)
 
-. **Use a reverse proxy** (nginx/Caddy) for SSL termination and admin route protection
-. **Set up monitoring** for the Spotify token refresh (alerts if refresh fails)
-. **Configure regular database backups** for the `data/songs.db` file
-. **Set appropriate `MAX_REQUESTED_SONGS`** based on event duration (20-30 recommended)
-. **Test the Spotify OAuth flow** before the event to ensure refresh tokens work
+| Route                     | Method | Purpose                            |
+| ------------------------- | ------ | ---------------------------------- |
+| `/api/search?q=`          | GET    | Search Spotify tracks              |
+| `/api/add`                | POST   | Submit request                     |
+| `/api/ranking`            | GET    | Get current leaderboard            |
+| `/api/upvote`             | POST   | Vote for a song                    |
+| `/api/events`             | GET    | SSE stream for real-time updates   |
+| `/api/admin-queue-delete` | POST   | Queue song to Spotify (admin only) |
+| `/api/admin-delete`       | POST   | Delete song (admin only)           |
 
 ---
 
 ## 🎨 Customization for Your Event
 
-this project was built for WiWi '26, you can adapt it:
-
-- **Logo:** Replace `/public/FSI-Logo2.png` with your event branding
-- **Colors:** Update `ACCENT_GREEN` in `app/page.tsx` and `app/admin/page.tsx`
-- **Event Name:** Change "WiWi '26 LIVE" in the public header
-- **Queue Size:** Adjust `MAX_REQUESTED_SONGS` in `.env`
+- **Logo:** Replace `/public/FSI-Logo2.png`
+- **Accent color:** Change `ACCENT_GREEN` in `app/page.tsx` and `app/admin/page.tsx`
+- **Event name:** Edit "WiWi '26 LIVE" in `app/page.tsx`
+- **Queue capacity:** Adjust `MAX_REQUESTED_SONGS` in `.env`
 
 ---
 
-## 📝 API Routes Overview
+## ⚠️ Known Limitations
 
-| Route                     | Method | Description                      |
-| ------------------------- | ------ | -------------------------------- |
-| `/api/search?q=`          | GET    | Search Spotify tracks            |
-| `/api/add`                | POST   | Add song to voting pool          |
-| `/api/ranking`            | GET    | Get current leaderboard          |
-| `/api/upvote`             | POST   | Vote for a song                  |
-| `/api/player`             | GET    | Get currently playing track      |
-| `/api/queue-status`       | GET    | Check if queue is full           |
-| `/api/events`             | GET    | SSE stream for real-time updates |
-| `/api/admin-delete`       | POST   | Delete a song (admin)            |
-| `/api/admin-queue-delete` | POST   | Queue song to Spotify (admin)    |
-| `/api/spotify-auth`       | GET    | Initiate Spotify OAuth           |
-| `/api/spotify-callback`   | GET    | OAuth callback handler           |
+- Admin needs **Spotify Premium** to control playback
+- SSE connections may drop on some hosts (reverse proxy helps)
+- Spotify tokens expire on server restart (no persistent storage)
 
 ---
 
-## 🐛 Known Limitations
+## 📄 License & Credits
 
-- Spotify queue management requires an **active Spotify Premium account** for the admin
-- SSE connections may be limited by hosting platforms (works best with reverse proxy)
-- No persistent storage for Spotify tokens (tokens expire with server restart)
-
----
-
-## 🤝 Contributing
-
-project was created for a specific event, but contributions are welcome! If you'd like to improve the codebase:
-
-. Fork the repository
-. Create a feature branch (`git checkout -b feature/amazing-feature`)
-. Commit your changes (`git commit -m 'Add amazing feature'`)
-. Push to the branch (`git push origin feature/amazing-feature`)
-. Open a Pull Request
-
----
-
-## 📄 License
-
-project is private and maintained by [Finn Krause](mailto:mail@finnkrause.com) for the FSI WiSo community. Please contact the author for licensing inquiries.
-
----
-
-## 👏 Acknowledgments
-
-- **FSI WiSo** — For fostering community-driven projects
-- **Spotify** — For providing the API that makes this possible
-- **WiWi '26** — The event that inspired this interactive experience
+**Author:** Finn Krause ([mail@finnkrause.com](mailto:mail@finnkrause.com))  
+**Organization:** Built for FSI WiSo events (independent project, not officially affiliated)  
+**Source:** [github.com/FinnKrause/Festival-Community-Stage-Portal](https://github.com/FinnKrause/Festival-Community-Stage-Portal)
 
 ---
 
 <p align="center">
-  Made with 🎵 by <a href="https://github.com/FinnKrause">Finn Krause</a> for the <a href="https://fsi-wiso.de">FSI WiSo</a> community
+  Made with 🎵 by Finn Krause
 </p>
