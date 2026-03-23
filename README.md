@@ -148,12 +148,8 @@ The app runs on port `3000` internally — expose it via a reverse proxy.
 
 ## 📄 License & Credits
 
-**Author:** Finn Krause ([mail@finnkrause.com](mailto:mail@finnkrause.com))  
+**Author:** Finn Krause
 **Organization:** Built for FSI WiSo events (independent project, not officially affiliated)  
 **Source:** [github.com/FinnKrause/Festival-Community-Stage-Portal](https://github.com/FinnKrause/Festival-Community-Stage-Portal)
 
----
-
-<p align="center">
-  Made with 🎵 by Finn Krause
-</p>
+**License** View LICENSE.md file
