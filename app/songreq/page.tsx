@@ -12,7 +12,7 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [ranking, setRanking] = useState<any[]>([]);
-  const [appState, setAppState] = useState<AppState>({});
+  const [appState, setAppState] = useState<AppState>();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [now, setNow] = useState<number>(new Date().getTime());
   const [queueFull, setQueueFull] = useState(false);
@@ -20,8 +20,8 @@ export default function Home() {
   const device = getDeviceId();
   const [debouncedQuery] = useDebounce(query, 400);
 
-  const isPageDisabled = appState.enable_page === "FALSE";
-  const isDJMode = appState.enable_dj === "TRUE";
+  const isPageDisabled = appState?.enable_page === "FALSE";
+  const isDJMode = appState?.enable_dj === "TRUE";
   const showDJMode = isDJMode;
   const showDisabledMode = isPageDisabled && !isDJMode;
   const showOverlay = showDJMode || showDisabledMode;
@@ -190,7 +190,7 @@ export default function Home() {
         </header>
 
         {/* Spotify Player */}
-        {appState.enable_player === "TRUE" && <SpotifyPlayer />}
+        {appState?.enable_player === "TRUE" && <SpotifyPlayer />}
 
         {/* Disabled overlay (inline) */}
         {showDisabledMode && (
