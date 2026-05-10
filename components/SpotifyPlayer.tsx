@@ -1,11 +1,49 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useEffect, useState } from "react";
 
 const REFRESH = Number(process.env.NEXT_PUBLIC_PLAYER_REFRESH ?? 1000);
+
+// Animated SVG border that travels around the rounded rectangle perfectly
+function AnimatedBorder() {
+  return (
+    <svg
+      className="absolute inset-0 w-full h-full pointer-events-none z-20"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect
+        x="1"
+        y="1"
+        width="calc(100% - 2px)"
+        height="calc(100% - 2px)"
+        rx="31"
+        ry="31"
+        fill="none"
+        stroke="url(#borderGlow)"
+        strokeWidth="1.5"
+        pathLength="1"
+        strokeDasharray="0.15 0.85"
+        strokeLinecap="round"
+        style={{ animation: "borderTravel 2.8s linear infinite" }}
+      />
+      <defs>
+        <linearGradient id="borderGlow" gradientUnits="userSpaceOnUse" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#3b82f6" stopOpacity="0" />
+          <stop offset="40%" stopColor="#3b82f6" stopOpacity="0.9" />
+          <stop offset="60%" stopColor="#60a5fa" stopOpacity="1" />
+          <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <style>{`
+        @keyframes borderTravel {
+          from { stroke-dashoffset: 1; }
+          to   { stroke-dashoffset: 0; }
+        }
+      `}</style>
+    </svg>
+  );
+}
 
 export default function SpotifyPlayer() {
   const [data, setData] = useState<any>(null);
@@ -27,87 +65,167 @@ export default function SpotifyPlayer() {
   if (!data || !data.playing) return null;
 
   return (
-    <div 
+    <div
       onClick={() => setIsExpanded(!isExpanded)}
-      className="group relative overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition-all duration-300 ease-in-out cursor-pointer active:scale-[0.99]"
+      className="relative w-full overflow-hidden rounded-[2rem] cursor-pointer active:scale-[0.98] transition-transform duration-150"
+      style={{ background: "#0f1115" }}
     >
-      {/* Blurred Background Layer */}
-      <div 
-        className="absolute inset-0 opacity-10 saturate-150 blur-2xl scale-110 pointer-events-none transition-opacity"
-        style={{ 
-          backgroundImage: `url(${data.playing.cover})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
+      {/* Animated border — SVG rect matches the card's border-radius exactly */}
+      <AnimatedBorder />
+
+      {/* Accent glow — contained within rounded corners via overflow-hidden on parent */}
+      <div
+        className="absolute -right-8 -top-8 w-40 h-40 rounded-full pointer-events-none"
+        style={{
+          background: "radial-gradient(circle, rgba(59,130,246,0.18) 0%, transparent 70%)",
         }}
       />
 
-      <div className="relative z-10">
-        {/* Top Section: Now Playing */}
-        <div className="p-4 flex items-center gap-4">
-          <div className="relative shrink-0">
-             <div className="absolute -inset-1 bg-[#1c7537]/10 rounded-xl animate-pulse" />
-             <img 
-               src={data.playing.cover} 
-               className="relative w-12 h-12 rounded-xl shadow-md border border-white/50 object-cover active:scale-90 transition-transform z-20" 
-               onClick={(e) => {
-                 e.stopPropagation(); // Don't trigger expand when clicking the link
-                 window.open(data.playing.url, "_blank");
-               }}
-               alt="Cover"
-             />
+      <div className="relative z-10 p-3.5">
+        {/* Main row */}
+        <div className="flex items-center gap-3">
+
+          {/* Cover art with spinning conic ring */}
+          <div className="relative flex-shrink-0 w-14 h-14">
+            {/* Spinning conic gradient — extends 3px beyond the image */}
+            <div
+              className="absolute -inset-[3px] rounded-[15px]"
+              style={{
+                background: "conic-gradient(from 0deg, transparent 0%, transparent 55%, #3b82f6 72%, #60a5fa 80%, transparent 92%, transparent 100%)",
+                animation: "spin 3s linear infinite",
+              }}
+            />
+            {/* Gap layer — sits between the conic ring and the image, same bg as card */}
+            <div
+              className="absolute -inset-[1px] rounded-[13px]"
+              style={{ background: "#0f1115" }}
+            />
+            <img
+              src={data.playing.cover}
+              className="relative w-14 h-14 rounded-xl object-cover z-10"
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(data.playing.url, "_blank");
+              }}
+              alt="Cover"
+            />
           </div>
-          
+
+          {/* Track info */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5 mb-0.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#1c7537] animate-pulse" />
-                <span className="text-[8px] font-black uppercase tracking-[0.2em] text-[#1c7537]">On Air</span>
+            <div className="flex items-center gap-2 mb-1">
+              {/* Equaliser bars - using blue primary, green secondary */}
+              <div className="flex gap-[2px] items-end h-2.5">
+                {[
+                  "eq 0.55s ease-in-out infinite alternate",
+                  "eq 0.85s ease-in-out infinite alternate",
+                  "eq 0.7s ease-in-out infinite alternate",
+                ].map((anim, i) => (
+                  <div
+                    key={i}
+                    className="w-[3px] rounded-sm"
+                    style={{ 
+                      height: i === 1 ? "60%" : "100%", 
+                      animation: anim,
+                      background: i === 1 ? "#10b981" : "#3b82f6"
+                    }}
+                  />
+                ))}
               </div>
-              {/* Expand Indicator */}
-              <div className={`text-[10px] transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
-                <svg width="10" height="6" viewBox="0 0 10 6" fill="none" className="text-gray-500">
-                  <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
+              <span className="text-[9px] font-black uppercase tracking-widest text-[#3b82f6]">
+                Now Playing
+              </span>
             </div>
-            <h3 className="text-[14px] font-black text-gray-900 truncate leading-tight tracking-tight">
+            <h3 className="text-[13px] font-black text-white truncate leading-none mb-1">
               {data.playing.title}
             </h3>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter truncate">
+            <p className="text-[10px] font-semibold truncate" style={{ color: "rgba(255,255,255,0.38)" }}>
               {data.playing.artist}
             </p>
           </div>
+
+          {/* Expand chevron */}
+          <div
+            className="flex-shrink-0 p-2 rounded-full transition-transform duration-500"
+            style={{
+              background: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)",
+            }}
+          >
+            <svg
+              width="12" height="12" viewBox="0 0 24 24"
+              fill="none" stroke="rgba(255,255,255,0.3)"
+              strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+            >
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+          </div>
         </div>
 
-        {/* Expandable Content: Upcoming 3 */}
-        <div 
-          className={`grid transition-all duration-300 ease-in-out ${
-            isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-          }`}
+        {/* Expandable queue */}
+        <div
+          className="grid transition-all duration-500 ease-in-out"
+          style={{
+            gridTemplateRows: isExpanded ? "1fr" : "0fr",
+            opacity: isExpanded ? 1 : 0,
+            marginTop: isExpanded ? "12px" : "0px",
+          }}
         >
           <div className="overflow-hidden">
-            {data.queue?.length > 0 ? (
-              <div className="bg-gray-50/50 px-4 pb-4 pt-2 border-t border-gray-100/50">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[8px] font-black uppercase tracking-[0.2em] text-gray-300">Next Up</span>
-                </div>
-                <div className="flex gap-2">
-                  {data.queue.slice(0, 3).map((song: any, idx: number) => (
-                    <div key={idx} className="flex-1 min-w-0 bg-white/80 rounded-xl p-2 border border-white shadow-sm">
-                      <p className="text-[9px] font-black text-gray-900 truncate">{song.title}</p>
-                      <p className="text-[8px] font-bold text-gray-400 truncate uppercase tracking-tighter">{song.artist}</p>
+            <div
+              className="rounded-2xl p-3"
+              style={{
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.07)",
+              }}
+            >
+              <div className="flex items-center gap-2 mb-2.5">
+                <div className="h-px flex-1" style={{ background: "rgba(255,255,255,0.08)" }} />
+                <span className="text-[8px] font-black uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.22)" }}>
+                  Up Next
+                </span>
+                <div className="h-px flex-1" style={{ background: "rgba(255,255,255,0.08)" }} />
+              </div>
+
+              <div className="space-y-2">
+                {data.queue?.length > 0 ? (
+                  data.queue.slice(0, 1).map((song: any, idx: number) => (
+                    <div key={idx} className="flex items-center gap-3">
+                      <div className="text-[9px] font-black w-3" style={{ color: "rgba(255,255,255,0.2)" }}>
+                        {idx + 1}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[10px] font-bold truncate" style={{ color: "rgba(255,255,255,0.65)" }}>
+                          {song.title}
+                        </p>
+                        <p className="text-[8px] font-semibold truncate uppercase tracking-wide" style={{ color: "rgba(255,255,255,0.25)" }}>
+                          {song.artist}
+                        </p>
+                      </div>
                     </div>
-                  ))}
-                </div>
+                  ))
+                ) : (
+                  <p className="text-[9px] font-bold text-center py-1 italic" style={{ color: "rgba(255,255,255,0.2)" }}>
+                    Queue is empty
+                  </p>
+                )}
               </div>
-            ) : (
-              <div className="px-4 pb-4 pt-2 border-t border-gray-100/50 text-center">
-                <p className="text-[8px] font-bold text-gray-300 uppercase tracking-widest">No songs in queue</p>
-              </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
+
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
+        }
+        @keyframes eq {
+          from { transform: scaleY(0.25); }
+          to   { transform: scaleY(1); }
+        }
+      `}</style>
     </div>
   );
 }
