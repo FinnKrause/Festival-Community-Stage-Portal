@@ -89,14 +89,16 @@ The app is designed to be **lightweight and efficient**:
 cp .env.example .env.local
 ```
 
-| Variable                | Value                                         |
-| ----------------------- | --------------------------------------------- |
-| `SPOTIFY_CLIENT_ID`     | From Spotify Dashboard                        |
-| `SPOTIFY_CLIENT_SECRET` | From Spotify Dashboard                        |
-| `SPOTIFY_REDIRECT_URI`  | `https://yourdomain.com/api/spotify-callback` |
-| `NEXT_PUBLIC_APP_URL`   | `https://yourdomain.com`                      |
-| `MAX_REQUESTED_SONGS`   | Recommended: `25`                             |
-| `SONG_TIMEOUT`          | `1800000` (30 min)                            |
+| Variable                     | Value                                            |
+| ---------------------------- | ------------------------------------------------ |
+| `SPOTIFY_CLIENT_ID`          | From Spotify Dashboard                           |
+| `SPOTIFY_CLIENT_SECRET`      | From Spotify Dashboard                           |
+| `SPOTIFY_REDIRECT_URI`       | `https://yourdomain.com/api/spotify-callback`    |
+| `SPOTIFY_REFRESH_INTERVAL`   | `5000` (backend cache reload interval)           |
+| `NEXT_PUBLIC_APP_URL`        | `https://yourdomain.com`                         |
+| `NEXT_PUBLIC_PLAYER_REFRESH` | `10000` (10 seconds - player UI update interval) |
+| `NEXT_MAX_REQUESTED_SONGS`   | `20` (Max songs allowed in queue)                |
+| `NEXT_SONG_TIMEOUT`          | `1800000` (30 minutes - song expiry time)        |
 
 ### 3. Deploy with Docker
 
@@ -134,7 +136,8 @@ The app runs on port `3000` internally — expose it via a reverse proxy.
 **Database Schema:**
 
 - `songs`: id, spotify_id, title, artist, cover_url, votes, created_at, device_id
-- `requests`: tracks which devices voted for which songs (prevents duplicate votes)
+- `requests`: id, song_id, device_id, created_at (tracks votes to prevent duplicates)
+- `app_state`: id, enable_page, enable_player, enable_dj, dp_message, dj_name, dj_insta, dj_message, dj_avatar_url
 
 ---
 
