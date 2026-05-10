@@ -119,7 +119,7 @@ export default function Home() {
   const getRemainingTime = (created_at: number) => {
     const EXPIRATION = (process.env.NEXT_SONG_TIMEOUT || 1800000) as number;
     const remaining = EXPIRATION - (now - created_at);
-    return remaining <= 0 ? "0m" : `${Math.ceil(remaining / 60000)}m`;
+    return remaining <= 0 ? "EXPIRES SOON" : `${Math.ceil(remaining / 60000)}m left`;
   };
 
   if (showDJMode)
@@ -314,7 +314,7 @@ export default function Home() {
                           <span className="text-[8px] font-black px-2 py-0.5 rounded-lg bg-[#2563eb]/15 text-[#3b82f6] border border-[#2563eb]/20 uppercase tracking-wide">
                             {s.votes} votes
                           </span>
-                          <span className="text-[8px] font-bold text-white/20 uppercase tracking-widest">
+                          <span className="text-[10px] font-bold text-white/20 tracking-widest">
                             {remaining}
                           </span>
                         </div>
