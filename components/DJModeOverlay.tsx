@@ -72,7 +72,7 @@ const DJModeOverlay: React.FC<DJModeOverlayProps> = ({ name, dj_avatar_url, inst
         
         {/* DJ Name with Animated Gradient - Blue theme */}
         <h1 className="text-6xl md:text-7xl font-black bg-gradient-to-r from-white via-[#60a5fa] to-white bg-clip-text text-transparent tracking-tighter animate-gradient-x">
-          DJ {name}
+          {name}
         </h1>
       </div>
       
