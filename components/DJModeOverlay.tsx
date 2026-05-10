@@ -21,9 +21,16 @@ const DJModeOverlay: React.FC<DJModeOverlayProps> = ({ name, dj_avatar_url, inst
   
   {/* Grid Pattern Overlay - Optional, can uncomment if desired */}
   {/* <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" xmlns="http://www.w3.org/2000/svg"%3E%3Cdefs%3E%3Cpattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse"%3E%3Cpath d="M 60 0 L 0 0 0 60" fill="none" stroke="%233b82f6" stroke-width="0.5" stroke-opacity="0.1"/%3E%3C/pattern%3E%3C/defs%3E%3Crect width="100%25" height="100%25" fill="url(%23grid)"/%3E%3C/svg%3E')] opacity-20"></div> */}
-  
+  <div className="absolute top-6 left-1/2 left-1/2 transform -translate-x-1/2 z-20">
+    <img
+      src="/FAU-Logo.png"
+      className="h-16  w-auto brightness-0 invert opacity-80 hover:opacity-100 transition-opacity"
+      alt="FAU Logo"
+    />
+  </div>
+
   {/* Content Container */}
-  <div className="relative z-10 max-w-2xl w-full space-y-8">
+  <div className="relative z-10 max-w-2xl w-full space-y-8 mt-10">
     
     {/* Live Broadcast Bar - Blue theme */}
     <div className="flex items-center justify-center gap-4 animate-fade-in-up">
@@ -33,7 +40,7 @@ const DJModeOverlay: React.FC<DJModeOverlayProps> = ({ name, dj_avatar_url, inst
           <span className="absolute inset-0 rounded-full bg-red-500 animate-ping opacity-75"></span>
           <span className="relative flex h-3 w-3 rounded-full bg-red-500"></span>
         </div>
-        <span className="text-[11px] font-bold text-red-500 uppercase tracking-[0.3em]">Live Broadcast</span>
+        <span className="text-[11px] font-bold text-red-500 uppercase tracking-[0.3em]">Für euch live</span>
       </div>
       <div className="h-px w-12 bg-gradient-to-l from-transparent to-[#3b82f6]"></div>
     </div>
