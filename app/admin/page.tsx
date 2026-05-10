@@ -285,13 +285,13 @@ export default function Admin() {
                   </div>
                 </div>
 
-                <div className="flex-1 overflow-auto p-4 space-y-4">
+                <div className="flex-1 overflow-auto p-4 space-y-2">
                   {/* Toggles */}
                   <div className="space-y-2">
                     <label className="text-[9px] font-black uppercase text-gray-400">Controls</label>
                     {[
-                      { id: 'enable_page', label: 'Page Visible' },
-                      { id: 'enable_dj', label: 'DJ Mode (Locks Page)' },
+                      { id: 'enable_page', label: 'Requests Possible' },
+                      { id: 'enable_dj', label: 'DJ Mode' },
                       { id: 'enable_player', label: 'Player Active' }
                     ].map((t) => (
                       <div key={t.id} className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-lg border border-gray-100">
@@ -342,9 +342,21 @@ export default function Admin() {
                     </div>
                   </div>
 
+                  {/* DJ-Avatar Message */}
+                  <div>
+                    <label className="text-[9px] font-black uppercase text-gray-400">DJ-Profilbild</label>
+                    <textarea
+                      value={appState.dj_avatar_url || ""}
+                      onChange={(e) => setAppState({ ...appState, dj_avatar_url: e.target.value })}
+                      className="w-full mt-1 p-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-300 resize-none"
+                      rows={1}
+                      placeholder="URL des Profilbildes"
+                    />
+                  </div>
+
                   {/* Block Message */}
                   <div>
-                    <label className="text-[9px] font-black uppercase text-gray-400">Block Message</label>
+                    <label className="text-[9px] font-black uppercase text-gray-400">DJ-Message</label>
                     <textarea
                       value={appState.dj_message || ""}
                       onChange={(e) => setAppState({ ...appState, dj_message: e.target.value })}

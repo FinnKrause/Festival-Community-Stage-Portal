@@ -9,4 +9,5 @@ export type AppState = {
   dj_name: string;
   dj_insta: string;
   dj_message: string;
+  dj_avatar_url: string;
 };

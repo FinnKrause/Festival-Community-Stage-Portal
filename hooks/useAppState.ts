@@ -10,6 +10,7 @@ export function useAppState() {
     dj_name: "",
     dj_insta: "",
     dj_message: "",
+    dj_avatar_url: "",
   });
 
   useEffect(() => {

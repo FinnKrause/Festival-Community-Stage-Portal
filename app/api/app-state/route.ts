@@ -6,7 +6,7 @@ export async function GET(req: Request) {
   const result = db
     .prepare(
       `
-    SELECT enable_page, enable_player, enable_dj, dp_message, dj_name, dj_insta, dj_message
+    SELECT enable_page, enable_player, enable_dj, dp_message, dj_name, dj_insta, dj_message, dj_avatar_url
     FROM app_state
     WHERE id = 1;
     `,
@@ -26,6 +26,7 @@ export async function POST(req: Request) {
     dj_insta,
     dj_message,
     enable_player,
+    dj_avatar_url,
   } = data;
 
   if (
@@ -35,7 +36,8 @@ export async function POST(req: Request) {
     !dp_message ||
     !dj_insta ||
     !dj_name ||
-    !dj_message
+    !dj_message ||
+    !dj_avatar_url
   )
     return Response.json({
       success: false,
@@ -52,7 +54,8 @@ export async function POST(req: Request) {
          dp_message = ? ,
          dj_name = ? ,
          dj_insta = ? ,
-         dj_message = ?
+         dj_message = ?,
+         dj_avatar_url = ?
         WHERE id=1`,
   ).run(
     enable_page,
@@ -62,6 +65,7 @@ export async function POST(req: Request) {
     dj_name,
     dj_insta,
     dj_message,
+    dj_avatar_url,
   );
 
   console.warn("[WARN]: Updated the Application state");

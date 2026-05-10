@@ -41,9 +41,11 @@ CREATE TABLE IF NOT EXISTS app_state (
   enable_dj TEXT,
 
   dp_message TEXT,
+
   dj_name TEXT,
   dj_insta TEXT,
-  dj_message TEXT 
+  dj_message TEXT,
+  dj_avatar_url TEXT
 );
 `);
 
@@ -57,7 +59,8 @@ INSERT OR IGNORE INTO app_state (
   dp_message, 
   dj_name, 
   dj_insta, 
-  dj_message
+  dj_message, 
+  dj_avatar_url
 ) VALUES (
   1,
   'TRUE',
@@ -66,11 +69,12 @@ INSERT OR IGNORE INTO app_state (
   'Aktuell machen wir leider eine Pause, schaue später wieder vorbei!',
   'DJ Sexy',
   'henni.colin',
-  'Aktuell legt einer unserer DJs auf, für diese Zeit ist das Songwunschsystem leider blockiert!'
+  'Aktuell legt einer unserer DJs auf, für diese Zeit ist das Songwunschsystem leider blockiert!',
+  'https://hips.hearstapps.com/hmg-prod/images/f6ggka-67a4b1aa28d9f.jpg?crop=0.655xw:1.00xh;0.0612xw,0&resize=640:*'
 );
 `,
 ).run();
 
-// startCleanup();
+startCleanup();
 
 export default db;
