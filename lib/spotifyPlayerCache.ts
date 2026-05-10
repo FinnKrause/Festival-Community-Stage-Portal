@@ -41,6 +41,7 @@ export async function getCachedPlayerState(): Promise<PlayerState> {
     const queueRes = await fetch("https://api.spotify.com/v1/me/player/queue", {
       headers: { Authorization: `Bearer ${token}` },
     });
+    // console.log("[INFO]: Fetched new Player-Data");
 
     let playing: PlayerState["playing"] = null;
     let queue: PlayerState["queue"] = [];

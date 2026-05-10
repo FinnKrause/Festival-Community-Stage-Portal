@@ -49,7 +49,7 @@ export async function POST(req: Request) {
   };
   const count = row.c;
 
-  const MAX = Number(process.env.MAX_REQUESTED_SONGS ?? 10);
+  const MAX = Number(process.env.MAX_REQUESTED_SONGS || 20);
 
   if (count >= MAX) {
     return Response.json({ error: "queue_full" }, { status: 400 });

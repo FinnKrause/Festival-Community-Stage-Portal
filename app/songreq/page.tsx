@@ -115,9 +115,8 @@ export default function Home() {
     return () => clearInterval(t);
   }, []);
 
-  const getRemainingTime = (created_at: number, index: number) => {
-    const EXPIRATION = 1800000;
-    if (index < 3) return "HELD";
+  const getRemainingTime = (created_at: number) => {
+    const EXPIRATION = (process.env.SONG_TIMEOUT || 1800000) as number;
     const remaining = EXPIRATION - (now - created_at);
     return remaining <= 0 ? "0m" : `${Math.ceil(remaining / 60000)}m`;
   };
@@ -198,7 +197,7 @@ export default function Home() {
           <div className="bg-white rounded-[2rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.03)] overflow-hidden">
             <div className="divide-y divide-gray-50">
               {ranking.map((s, i) => {
-                const remaining = getRemainingTime(s.created_at, i);
+                const remaining = getRemainingTime(s.created_at);
 
                 return (
                   <div key={s.id} className="group flex items-center gap-4 p-4 hover:bg-[#1c7537]/[0.02] transition-colors">

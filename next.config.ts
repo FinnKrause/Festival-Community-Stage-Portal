@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
     "stage.fsi-wiso.de",
     "songreq.fsi-wiso.de",
     "192.168.178.81:3000",
+    "192.168.0.108",
   ],
   async redirects() {
     return [{ source: "/", destination: "/songreq", permanent: true }];

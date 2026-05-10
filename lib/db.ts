@@ -12,6 +12,8 @@ if (!fs.existsSync(dbPath)) {
 const db = new Database(path.join(dbPath, "songs.db"));
 
 db.exec(`
+PRAGMA foreign_keys = ON;
+
 CREATE TABLE IF NOT EXISTS songs (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   spotify_id TEXT UNIQUE,
@@ -25,9 +27,10 @@ CREATE TABLE IF NOT EXISTS songs (
 
 CREATE TABLE IF NOT EXISTS requests (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  song_id INTEGER,
+  song_id INTEGER NOT NULL,
   device_id TEXT,
-  created_at INTEGER
+  created_at INTEGER,
+  FOREIGN KEY (song_id) REFERENCES songs(id) ON DELETE CASCADE
 );
 `);
 
