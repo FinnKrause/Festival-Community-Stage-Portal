@@ -32,8 +32,45 @@ CREATE TABLE IF NOT EXISTS requests (
   created_at INTEGER,
   FOREIGN KEY (song_id) REFERENCES songs(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS app_state (
+  id INTEGER PRIMARY KEY,
+
+  enable_page TEXT,
+  enable_player TEXT,
+  enable_dj TEXT,
+
+  dp_message TEXT,
+  dj_name TEXT,
+  dj_insta TEXT,
+  dj_message TEXT 
+);
 `);
 
-startCleanup();
+db.prepare(
+  `
+INSERT OR IGNORE INTO app_state (
+  id, 
+  enable_page, 
+  enable_player, 
+  enable_dj, 
+  dp_message, 
+  dj_name, 
+  dj_insta, 
+  dj_message
+) VALUES (
+  1,
+  'TRUE',
+  'TRUE',
+  'FALSE',
+  'Aktuell machen wir leider eine Pause, schaue später wieder vorbei!',
+  'DJ Sexy',
+  'henni.colin',
+  'Aktuell legt einer unserer DJs auf, für diese Zeit ist das Songwunschsystem leider blockiert!'
+);
+`,
+).run();
+
+// startCleanup();
 
 export default db;

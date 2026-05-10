@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useDebounce } from "use-debounce";
 import { getDeviceId } from "@/lib/device";
 import SpotifyPlayer from "@/components/SpotifyPlayer";
+import { AppState } from "@/lib/app_state";
 
 const ACCENT_GREEN = "#1c7537";
 
@@ -11,6 +12,7 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [ranking, setRanking] = useState<any[]>([]);
+  const [appState, setAppState] = useState<AppState>({});
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [now, setNow] = useState<number>(new Date().getTime());
   const [queueFull, setQueueFull] = useState(false);
@@ -82,12 +84,20 @@ export default function Home() {
     loadRanking();
   }
 
+  async function getApplicationState() {
+    const res = await fetch("/api/app-state");
+    const data = await res.json();
+    setAppState(data.data);
+    console.log("Updated the application data")
+  }
+
   useEffect(() => {
     search(debouncedQuery);
   }, [debouncedQuery]);
 
   useEffect(() => {
     loadRanking();
+    getApplicationState()
     let ev: EventSource;
     function connect() {
       ev = new EventSource("/api/events");
@@ -98,6 +108,9 @@ export default function Home() {
           if (msg.event === "ranking_update") {
             loadRanking();
             loadQueueStatus();
+          }
+          if (msg.event === "app_state") {
+            getApplicationState()
           }
         } catch {}
       };
@@ -116,7 +129,7 @@ export default function Home() {
   }, []);
 
   const getRemainingTime = (created_at: number) => {
-    const EXPIRATION = (process.env.SONG_TIMEOUT || 1800000) as number;
+    const EXPIRATION = (process.env.NEXT_SONG_TIMEOUT || 1800000) as number;
     const remaining = EXPIRATION - (now - created_at);
     return remaining <= 0 ? "0m" : `${Math.ceil(remaining / 60000)}m`;
   };
@@ -150,7 +163,8 @@ export default function Home() {
           <img src="/FSI-Logo2.png" className="h-10 w-auto contrast-125" alt="Logo" />
         </header>
 
-        <SpotifyPlayer />
+         {appState.enable_player==="TRUE"&& <SpotifyPlayer />}
+         
 
         <div className="relative z-50">
           {queueFull ? (
