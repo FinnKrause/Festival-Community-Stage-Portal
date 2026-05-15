@@ -390,7 +390,7 @@ export default function Home() {
 
             {/* Footer */}
             <footer className="mt-2 flex justify-center gap-6 opacity-20 text-[8px] font-bold uppercase tracking-widest">
-              <p>Ein Projekt von Finn von der FAU</p>
+              <p>© 2026 Finn Krause</p>
               <a href="mailto:mail@finnkrause.com" className="hover:opacity-60 transition-opacity">Kontakt</a>
             </footer>
           </>
