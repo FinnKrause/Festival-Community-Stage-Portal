@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import { useDebounce } from "use-debounce";
 import { getDeviceId } from "@/lib/device";
-import SpotifyPlayer from "@/components/SpotifyPlayer";
-import { AppState } from "@/lib/app_state";
-import DisabledOverlay from "@/components/DisabledOverlay";
-import DJModeOverlay from "@/components/DJModeOverlay";
+import SpotifyPlayer from "@/components/SpotifyPlayer/SpotifyPlayer";
+import { AppState, Song } from "@/lib/types";
+import DisabledOverlay from "@/app/songreq/_components/DisabledOverlay";
+import DJModeOverlay from "@/app/songreq/_components/DJModeOverlay";
 
 export default function Home() {
   const [query, setQuery] = useState("");
@@ -16,9 +16,10 @@ export default function Home() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [now, setNow] = useState<number>(new Date().getTime());
   const [queueFull, setQueueFull] = useState(false);
+  const [showAutoplayInfo, setShowAutoplayInfo] = useState(false);
 
   const device = getDeviceId();
-  const [debouncedQuery] = useDebounce(query, 400);
+  const [debouncedQuery] = useDebounce(query, 150);
 
   const isPageDisabled = appState?.enable_page === "FALSE";
   const isDJMode = appState?.enable_dj === "TRUE";
@@ -28,7 +29,9 @@ export default function Home() {
 
   async function loadRanking() {
     const res = await fetch("/api/ranking");
-    setRanking(await res.json());
+    const data = await res.json();
+    setRanking(data);
+    // console.log(JSON.stringify(data))
     loadQueueStatus();
   }
 
@@ -44,12 +47,12 @@ export default function Home() {
     setResults(await res.json());
   }
 
-  async function addSong(song: any) {
+  async function addSong(song: Song) {
     const payload = {
-      spotify_id: song.id ?? song.spotify_id,
+      spotify_id: song.spotify_id,
       title: song.title,
       artist: song.artist,
-      cover: song.cover ?? song.cover_url,
+      cover_url: song.cover_url,
       device_id: device,
     };
     const res = await fetch("/api/add", {
@@ -59,13 +62,12 @@ export default function Home() {
     });
     const data = await res.json();
     if (data.error) {
-      setErrorMsg(data.error === "queue_full" ? "QUEUE FULL" : "SYSTEM ERROR");
+      setErrorMsg(data.message);
       setTimeout(() => setErrorMsg(null), 3000);
       return;
     }
     setQuery("");
     setResults([]);
-    loadRanking();
   }
 
   async function upvote(id: number) {
@@ -76,17 +78,19 @@ export default function Home() {
     });
     const data = await res.json();
     if (data.error) {
-      setErrorMsg(data.error === "already_voted" ? "ALREADY VOTED" : "VOTE FAILED");
+      setErrorMsg(data.message === "already_voted" ? "ALREADY VOTED" : data.message);
       setTimeout(() => setErrorMsg(null), 2000);
       return;
     }
-    loadRanking();
   }
 
   async function getApplicationState() {
     const res = await fetch("/api/app-state");
     const data = await res.json();
     setAppState(data.data);
+    if (data.data?.enable_autoplay === "TRUE") {
+      setShowAutoplayInfo(true);
+    }
   }
 
   useEffect(() => { search(debouncedQuery); }, [debouncedQuery]);
@@ -161,17 +165,17 @@ export default function Home() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#3b82f6] opacity-60" />
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#3b82f6]" />
               </span>
-              <span className="text-[9px] font-black uppercase tracking-[0.25em] text-[#3b82f6]">WiWi '26 Live</span>
+              <span className="text-[9px] font-black uppercase tracking-[0.25em] text-[#3b82f6]">WiWi-Meisterschaften x FAU</span>
             </div>
-            <h1 className="text-[2.2rem] font-black italic tracking-tighter leading-[0.9] uppercase">
-              Track{" "}
+            <h1 className="text-[2.4rem] font-black italic tracking-tighter leading-[0.9] uppercase">
+              PARTY{" "}
               <span
                 className="text-transparent"
                 style={{
                   WebkitTextStroke: "1.5px #2563eb",
                 }}
               >
-                Arena
+                ZELT
               </span>
             </h1>
           </div>
@@ -202,6 +206,30 @@ export default function Home() {
 
         {!showOverlay && (
           <>
+            {/* Autoplay info */}
+            {appState?.enable_autoplay === "TRUE" && showAutoplayInfo && (
+              <div className="relative z-50 rounded-[1.75rem] border border-red-400/20 bg-red-500/10 p-4 shadow-2xl backdrop-blur-xl text-red-100">
+                <div className="flex items-start gap-3">
+
+                  <div className="min-w-0">
+                    <p className="text-[9px] font-black uppercase tracking-[0.25em] text-red-300">Autoplay aktiv</p>
+                    <p className="mt-1 text-[12px] leading-5 text-white/80">
+                      {appState.autoplay_message}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowAutoplayInfo(false)}
+                    style={{position: "absolute", right: 5, top: 5}}
+                    className="ml-auto flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-red-100 hover:bg-white/10 transition"
+                    aria-label="Dismiss autoplay alert"
+                  >
+                    <span className="text-[14px] leading-none">x</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Search / Queue full */}
             <div className="relative z-50">
               {queueFull ? (
@@ -226,7 +254,7 @@ export default function Home() {
                                  text-[16px] font-bold placeholder:text-white/20 text-white
                                  outline-none focus:bg-white/[0.09] focus:border-[#2563eb]/40
                                  focus:ring-2 focus:ring-[#2563eb]/20 transition-all duration-300"
-                      placeholder="Request a track…"
+                      placeholder="Schicke deinen Song an den DJ"
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
                     />
@@ -238,10 +266,10 @@ export default function Home() {
                                     animate-in zoom-in-95 fade-in duration-150 z-50">
                       {results.map((r) => (
                         <div
-                          key={r.id}
+                          key={r.spotify_id}
                           className="flex items-center gap-3.5 p-3.5 hover:bg-white/[0.04] transition-colors"
                         >
-                          <img src={r.cover} className="w-10 h-10 rounded-xl object-cover shadow-md" alt={r.title} />
+                          <img src={r.cover_url} className="w-10 h-10 rounded-xl object-cover shadow-md" alt={r.title} />
                           <div className="flex-1 min-w-0">
                             <div className="text-[13px] font-bold text-white truncate">{r.title}</div>
                             <div className="text-[10px] text-white/40 font-semibold uppercase tracking-wide truncate">{r.artist}</div>
@@ -268,36 +296,29 @@ export default function Home() {
                   Arena Leaderboard
                 </h2>
                 <div className="h-px flex-1 bg-gradient-to-r from-[#3b82f6]/20 to-transparent" />
+   
               </div>
 
               <div className="rounded-[2rem] border border-white/[0.06] bg-white/[0.03] backdrop-blur-xl overflow-hidden divide-y divide-white/[0.04]">
                 {ranking.map((s, i) => {
                   const remaining = getRemainingTime(s.created_at);
-                  const isTop = i === 0;
 
                   return (
                     <div
-                      key={s.id}
+                      key={s.spotify_id}
                       className={`group flex items-center gap-4 p-4 transition-colors duration-200
-                        hover:bg-white/[0.04]
-                        ${isTop ? "bg-[#2563eb]/[0.07]" : ""}`}
+                        hover:bg-white/[0.04] bg-[#2563eb]/[0.07]`}
                     >
                       {/* Rank */}
                       <div className="w-5 flex-shrink-0 text-center">
-                        {isTop ? (
-                          <span className="text-[10px] font-black text-[#3b82f6]">▲</span>
-                        ) : (
                           <span className="text-[11px] font-black text-white/20 group-hover:text-white/40 transition-colors">
                             {i + 1}
                           </span>
-                        )}
                       </div>
 
                       {/* Cover */}
                       <div className="relative flex-shrink-0">
-                        {isTop && (
-                          <div className="absolute -inset-1 rounded-xl bg-[#2563eb]/30 blur-sm" />
-                        )}
+                        <div className="absolute -inset-1 rounded-xl bg-[#2563eb]/30 blur-sm" />
                         <img
                           src={s.cover_url}
                           className="relative w-11 h-11 rounded-xl object-cover shadow-md group-hover:scale-[1.04] transition-transform duration-200"
@@ -321,8 +342,8 @@ export default function Home() {
                       </div>
 
                       {/* Upvote - using blue with green accent */}
-                      <button
-                        onClick={() => upvote(s.id)}
+                      {s.queued==="FALSE" && <button
+                        onClick={() => upvote(s.spotify_id)}
                         className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-2xl
                                    border border-white/8 bg-white/[0.04] text-white/20
                                    hover:border-[#3b82f6]/60 hover:text-[#3b82f6] hover:bg-[#2563eb]/10
@@ -333,7 +354,21 @@ export default function Home() {
                           stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M6 1v10M1 6l5-5 5 5" />
                         </svg>
-                      </button>
+                      </button>}
+
+                      {s.queued === "TRUE" && (
+                        <div
+                          className="flex-shrink-0 px-3 py-1 rounded-xl
+                                    border border-emerald-400/20
+                                    bg-emerald-400/10
+                                    text-emerald-300
+                                    text-[9px] font-black uppercase tracking-[0.18em]
+                                    shadow-[0_0_12px_rgba(74,222,128,0.12)]"
+                        >
+                          QUEUED
+                        </div>
+                      )}
+
                     </div>
                   );
                 })}
@@ -347,7 +382,7 @@ export default function Home() {
                         <path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" />
                       </svg>
                     </div>
-                    <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em]">No Tracks Queued</p>
+                    <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em]">Noch keine Vorschläge eingetroffen - Sei der erste :)</p>
                   </div>
                 )}
               </div>
@@ -355,7 +390,7 @@ export default function Home() {
 
             {/* Footer */}
             <footer className="mt-2 flex justify-center gap-6 opacity-20 text-[8px] font-bold uppercase tracking-widest">
-              <p>© 2026 F. Krause</p>
+              <p>Ein Projekt von Finn von der FAU</p>
               <a href="mailto:mail@finnkrause.com" className="hover:opacity-60 transition-opacity">Kontakt</a>
             </footer>
           </>

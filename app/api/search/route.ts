@@ -12,12 +12,14 @@ export async function GET(req: Request) {
 
   const data = await searchTracks(q);
 
-  const tracks = data.tracks.items.map((t: any) => ({
-    id: t.id,
-    title: t.name,
-    artist: t.artists.map((a: any) => a.name).join(", "),
-    cover: t.album.images[0]?.url,
-  }));
+  const tracks = data.tracks.items.map((t: any) => {
+    return {
+      spotify_id: t.id,
+      title: t.name,
+      artist: t.artists.map((a: any) => a.name).join(", "),
+      cover_url: t.album.images[0]?.url,
+    };
+  });
 
   return Response.json(tracks);
 }

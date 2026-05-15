@@ -1,8 +1,9 @@
-import { AppState } from "@/lib/app_state";
+import { AppState } from "@/lib/types";
 import { useState, useEffect } from "react";
 
 export function useAppState() {
   const [settings, setSettings] = useState<AppState>({
+    enable_autoplay: "FALSE",
     enable_page: "TRUE",
     enable_player: "TRUE",
     enable_dj: "FALSE",
@@ -35,16 +36,27 @@ export function useAppState() {
   };
 
   const updateSettings = (newState: AppState) => {
-    if (newState.enable_dj === "TRUE" && settings.enable_dj === "FALSE") {
-      newState.enable_page = "FALSE";
-    } else if (
-      newState.enable_page === "TRUE" &&
-      settings.enable_page === "FALSE"
-    ) {
-      newState.enable_dj = "FALSE";
+    const updated = { ...newState };
+
+    const djChangedToTrue =
+      updated.enable_dj === "TRUE" && settings.enable_dj !== "TRUE";
+    const autoplayChangedToTrue =
+      updated.enable_autoplay === "TRUE" && settings.enable_autoplay !== "TRUE";
+    const pageChangedToTrue =
+      updated.enable_page === "TRUE" && settings.enable_page !== "TRUE";
+
+    if (djChangedToTrue) {
+      updated.enable_autoplay = "FALSE";
+      updated.enable_page = "FALSE";
+      updated.enable_player = "FALSE";
+    } else if (autoplayChangedToTrue) {
+      updated.enable_page = "TRUE";
+      updated.enable_dj = "FALSE";
+    } else if (pageChangedToTrue) {
+      updated.enable_dj = "FALSE";
     }
 
-    setSettings(newState);
+    setSettings(updated);
   };
 
   return {

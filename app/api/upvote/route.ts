@@ -16,7 +16,10 @@ export async function POST(req: Request) {
     .get(id, device_id);
 
   if (exists) {
-    return Response.json({ error: "already_voted" }, { status: 400 });
+    return Response.json(
+      { error: true, message: "already_voted" },
+      { status: 400 },
+    );
   }
 
   db.prepare(`UPDATE songs SET votes=votes+1 WHERE id=?`).run(id);

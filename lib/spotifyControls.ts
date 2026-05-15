@@ -19,7 +19,7 @@ export async function addToSpotifyQueue(spotify_id: string) {
 
   if (!res.ok) {
     const text = await res.text();
-    console.error("[ERR] Spotify Queue error:", text);
+    throw new Error("Could not add Song to the Queue: " + text);
   } else {
     // console.log(
     //   "[PASS] Track " + spotify_id + " was added to the queue by the Admin-UI.",
