@@ -8,6 +8,7 @@ export function useAppState() {
     enable_player: "TRUE",
     enable_dj: "FALSE",
     dp_message: "",
+    autoplay_message: "",
     dj_name: "",
     dj_insta: "",
     dj_message: "",
