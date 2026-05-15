@@ -785,19 +785,19 @@ export default function Home() {
           </div>
         </section>
 
-        {/* FOOTER */}
-        <footer className="mt-2 flex justify-center gap-6 opacity-20 text-[8px] font-bold uppercase tracking-widest">
-          <p>© 2026 Finn Krause</p>
-          <a href="https://forms.gle/ebtuHsYw8STsJ8WeA">Feedback</a>
-          <a
-            href="mailto:mail@finnkrause.com"
-            className="hover:opacity-60 transition-opacity"
-          >
-            Kontakt
-          </a>
-        </footer>
       </>
     )}
+    {/* FOOTER */}
+    <footer className="mt-2 flex justify-center gap-6 opacity-20 text-[8px] font-bold uppercase tracking-widest">
+      <p>© 2026 Finn Krause</p>
+      <a href="https://forms.gle/ebtuHsYw8STsJ8WeA" target="_blank">Feedback</a>
+      <a
+        href="mailto:mail@finnkrause.com"
+        className="hover:opacity-60 transition-opacity"
+      >
+        Kontakt
+      </a>
+    </footer>
   </div>
 
   {/* Global keyframes — add to your globals.css instead if preferred */}
