@@ -4,7 +4,7 @@ export function getDeviceId(): string {
   let id = localStorage.getItem("deviceId");
 
   if (!id) {
-    id = generateUUID();
+    id = new Date().getTime() + "";
     localStorage.setItem("deviceId", id);
   }
 
