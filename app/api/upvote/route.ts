@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     );
   }
 
-  db.prepare(`UPDATE songs SET votes=votes+1 WHERE id=?`).run(id);
+  db.prepare(`UPDATE songs SET votes=votes+1 WHERE spotify_id=?`).run(id);
 
   db.prepare(
     `INSERT INTO requests (song_id, device_id, created_at)
