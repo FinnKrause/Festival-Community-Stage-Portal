@@ -1,29 +1,107 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AnimatedBorder } from "../AnimatedBorder";
 
 const REFRESH = Number(process.env.NEXT_PUBLIC_PLAYER_REFRESH ?? 1000);
 
-export default function SpotifyPlayer() {
-  const [data, setData] = useState<any>(null);
-  const [isExpanded, setIsExpanded] = useState(false);
+type SpotifyPlayerMode = "spotify" | "rekordbox";
 
-  async function load() {
-    try {
-      const res = await fetch("/api/player");
-      if (res.ok) setData(await res.json());
-    } catch {}
+type Track = {
+  title: string;
+  artist: string;
+  cover: string | null;
+  url: string | null;
+};
+
+type PlayerData = {
+  playing: Track | null;
+  queue: Track[];
+};
+
+type OldPlayerResponse = {
+  playing: Track | null;
+  queue?: Track[];
+};
+
+type RekordboxPlayerResponse = {
+  source: "spotify" | "local";
+  spotify_id: string | null;
+  local_id: string | null;
+  playing: boolean;
+  title: string | null;
+  artist: string | null;
+  cover_url: string | null;
+  url: string | null;
+} | null;
+
+type SpotifyPlayerProps = {
+  mode?: SpotifyPlayerMode;
+};
+
+function normalizePlayerData(
+  mode: SpotifyPlayerMode,
+  data: OldPlayerResponse | RekordboxPlayerResponse,
+): PlayerData {
+  if (mode === "rekordbox") {
+    const rekordboxData = data as RekordboxPlayerResponse;
+
+    return {
+      playing:
+        rekordboxData?.playing === true
+          ? {
+              title: rekordboxData.title ?? "Unknown track",
+              artist: rekordboxData.artist ?? "",
+              cover: rekordboxData.cover_url,
+              url: rekordboxData.url,
+            }
+          : null,
+      queue: [],
+    };
   }
 
-  useEffect(() => {
-    load();
-    const t = setInterval(load, REFRESH);
-    return () => clearInterval(t);
-  }, []);
+  const spotifyData = data as OldPlayerResponse;
 
-  if (!data || !data.playing) return null;
+  return {
+    playing: spotifyData?.playing ?? null,
+    queue: spotifyData?.queue ?? [],
+  };
+}
+
+export default function SpotifyPlayer({ mode = "spotify" }: SpotifyPlayerProps) {
+  const [data, setData] = useState<PlayerData | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const load = useCallback(async () => {
+    try {
+      const endpoint =
+        mode === "rekordbox" ? "/api/rekordbox-player" : "/api/player";
+      const res = await fetch(endpoint);
+
+      if (res.ok) {
+        setData(normalizePlayerData(mode, await res.json()));
+      }
+    } catch {}
+  }, [mode]);
+
+  useEffect(() => {
+    const initial = setTimeout(() => {
+      void load();
+    }, 0);
+    const interval = setInterval(() => {
+      void load();
+    }, REFRESH);
+
+    return () => {
+      clearTimeout(initial);
+      clearInterval(interval);
+    };
+  }, [load]);
+
+  const playing = data?.playing;
+
+  if (!playing) return null;
 
   return (
     <div
@@ -62,11 +140,13 @@ export default function SpotifyPlayer() {
               style={{ background: "#0f1115" }}
             />
             <img
-              src={data.playing.cover}
+              src={playing.cover ?? ""}
               className="relative w-14 h-14 rounded-xl object-cover z-10"
               onClick={(e) => {
                 e.stopPropagation();
-                window.open(data.playing.url, "_blank");
+                if (playing.url) {
+                  window.open(playing.url, "_blank");
+                }
               }}
               alt="Cover"
             />
@@ -98,10 +178,10 @@ export default function SpotifyPlayer() {
               </span>
             </div>
             <h3 className="text-[13px] font-black text-white truncate leading-none mb-1">
-              {data.playing.title}
+              {playing.title}
             </h3>
             <p className="text-[10px] font-semibold truncate" style={{ color: "rgba(255,255,255,0.38)" }}>
-              {data.playing.artist}
+              {playing.artist}
             </p>
           </div>
 
@@ -150,8 +230,8 @@ export default function SpotifyPlayer() {
               </div>
 
               <div className="space-y-2">
-                {data.queue?.length > 0 ? (
-                  data.queue.slice(0, 1).map((song: any, idx: number) => (
+                {data.queue.length > 0 ? (
+                  data.queue.slice(0, 1).map((song, idx) => (
                     <div key={idx} className="flex items-center gap-3">
                       <div className="text-[9px] font-black w-3" style={{ color: "rgba(255,255,255,0.2)" }}>
                         {idx + 1}

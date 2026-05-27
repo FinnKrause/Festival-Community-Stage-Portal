@@ -26,14 +26,16 @@ export async function POST(req: Request) {
     dj_name,
     dj_insta,
     dj_message,
-    enable_player,
+    enable_spotify_player,
+    enable_rekordbox_player,
     dj_avatar_url,
   } = data;
 
   if (
     !enable_autoplay ||
     !enable_page ||
-    !enable_player ||
+    !enable_spotify_player ||
+    !enable_rekordbox_player ||
     !enable_dj ||
     !dp_message ||
     !dj_insta ||
@@ -53,7 +55,8 @@ export async function POST(req: Request) {
         SET 
         enable_autoplay = ?,
         enable_page = ?,
-        enable_player = ?,
+        enable_spotify_player = ?,
+        enable_rekordbox_player = ?,
          enable_dj = ? ,
          dp_message = ? ,
          autoplay_message = ? ,
@@ -65,7 +68,8 @@ export async function POST(req: Request) {
   ).run(
     enable_autoplay,
     enable_page,
-    enable_player,
+    enable_spotify_player,
+    enable_rekordbox_player,
     enable_dj,
     dp_message,
     autoplay_message,

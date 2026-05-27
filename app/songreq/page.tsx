@@ -164,6 +164,7 @@ export default function Home() {
   const showDJMode = isDJMode;
   const showDisabledMode = isPageDisabled && !isDJMode;
   const showOverlay = showDJMode || showDisabledMode;
+  const showPlayer = appState?.enable_spotify_player === "TRUE" ? "spotify" : (appState?.enable_rekordbox_player === "TRUE"? "rekordbox" : null);
 
   const loadQueueStatus = useCallback(async () => {
     try {
@@ -457,7 +458,7 @@ export default function Home() {
       </div>
     </header>
 
-    {appState?.enable_player === "TRUE" && <SpotifyPlayer />}
+    {showPlayer && <SpotifyPlayer mode={showPlayer}/>}
 
     {/* DISABLED */}
     {showDisabledMode && (

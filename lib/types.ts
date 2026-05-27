@@ -4,7 +4,8 @@ export type AppState = {
   enable_autoplay: database_boolean;
   enable_page: database_boolean;
   enable_dj: database_boolean;
-  enable_player: database_boolean;
+  enable_spotify_player: database_boolean;
+  enable_rekordbox_player: database_boolean;
   dp_message: string;
   autoplay_message: string;
   dj_name: string;

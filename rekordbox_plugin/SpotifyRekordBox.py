@@ -5,12 +5,12 @@ import json
 import mimetypes
 import re
 import time
-import requests
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
 import pyrekordbox.db6.database as rekordbox_database
+import requests
 from pyrekordbox import Rekordbox6Database
 from pyrekordbox.db6.tables import DjmdContent
 
@@ -30,13 +30,12 @@ PLAY_STATUS_RE = re.compile(r'name="PlayStatus(\d+)" val="(\d+)"')
 
 @dataclass(frozen=True)
 class PlayerState:
-    spotify_id: Optional[str]
+    source: str
     playing: bool
-    playback_id: str
+    identity: str
     position_ms: int
     sequence_number: int
-    # local-only fields
-    source: str = "spotify"
+    spotify_id: Optional[str] = None
     local_id: Optional[str] = None
     title: Optional[str] = None
     artist: Optional[str] = None
@@ -71,92 +70,105 @@ def read_playing_states() -> list[bool]:
     return states
 
 
+def read_spotify_report() -> dict[str, tuple[bool, str, int, int]]:
+    try:
+        report = json.loads(REPORT_PATH.read_text())
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+    states: dict[str, tuple[bool, str, int, int]] = {}
+    for item in report.get("playbackReportInfo") or []:
+        spotify_id = extract_spotify_id(item.get("trackUrl"))
+        if not spotify_id:
+            continue
+
+        states[spotify_id] = (
+            not bool(item.get("paused")),
+            str(item.get("playbackId") or spotify_id),
+            int(item.get("endPositionMs") or 0),
+            int(item.get("sequenceNumber") or 0),
+        )
+
+    return states
+
+
 def read_artwork_data_url(image_path: Optional[str]) -> Optional[str]:
     if not image_path:
         return None
+
     path = REKORDBOX_SHARE_DIR / image_path.lstrip("/")
     if not path.exists():
         return None
+
     mime_type = mimetypes.guess_type(path)[0] or "image/jpeg"
     return (
         f"data:{mime_type};base64,{base64.b64encode(path.read_bytes()).decode('ascii')}"
     )
 
 
-def read_local_tracks(playing_states: list[bool]) -> list[PlayerState]:
+def get_loaded_tracks() -> list[PlayerState]:
     disable_rekordbox_process_check()
-    players: list[PlayerState] = []
+    playing_states = read_playing_states()
+    spotify_report = read_spotify_report()
+
     with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(
         io.StringIO()
     ):
         with Rekordbox6Database() as db:
-            # Expire all cached ORM objects so we always get fresh data from disk
-            db.session.expire_all()
             contents = (
                 db.get_content().order_by(DjmdContent.updated_at.desc()).limit(2).all()
             )
+
+            players: list[PlayerState] = []
             for index, content in enumerate(contents):
-                if extract_spotify_id(content.FolderPath, content.FileNameL):
-                    continue
+                spotify_id = extract_spotify_id(content.FolderPath, content.FileNameL)
                 playing = (
                     playing_states[index] if index < len(playing_states) else False
                 )
+
+                if spotify_id:
+                    report_playing, playback_id, position_ms, sequence = (
+                        spotify_report.get(
+                            spotify_id,
+                            (playing, spotify_id, 0, index),
+                        )
+                    )
+                    players.append(
+                        PlayerState(
+                            source="spotify",
+                            spotify_id=spotify_id,
+                            playing=report_playing,
+                            identity=playback_id,
+                            position_ms=position_ms,
+                            sequence_number=sequence,
+                        )
+                    )
+                    continue
+
                 players.append(
                     PlayerState(
                         source="local",
-                        spotify_id=None,
                         local_id=str(content.ID),
                         title=content.Title or content.FileNameL or "Unknown track",
                         artist=content.Artist.Name if content.Artist else "",
                         cover_url=read_artwork_data_url(content.ImagePath),
                         playing=playing,
-                        playback_id=f"local:{content.ID}",
+                        identity=f"local:{content.ID}",
                         position_ms=0,
                         sequence_number=index,
                     )
                 )
-    return players
 
-
-def read_players() -> list[PlayerState]:
-    # --- Spotify players: read from report.json exactly as the original ---
-    try:
-        report = json.loads(REPORT_PATH.read_text())
-    except (OSError, json.JSONDecodeError):
-        report = {}
-
-    players: list[PlayerState] = []
-    for item in report.get("playbackReportInfo") or []:
-        spotify_id = extract_spotify_id(item.get("trackUrl"))
-        if not spotify_id:
-            continue
-        players.append(
-            PlayerState(
-                source="spotify",
-                spotify_id=spotify_id,
-                playing=not bool(item.get("paused")),
-                playback_id=str(item.get("playbackId") or ""),
-                position_ms=int(item.get("endPositionMs") or 0),
-                sequence_number=int(item.get("sequenceNumber") or 0),
-            )
-        )
-
-    # --- Local players: read from Rekordbox DB for tracks not on Spotify ---
-    playing_states = read_playing_states()
-    players.extend(read_local_tracks(playing_states))
-
-    return players
+            return players
 
 
 def choose_player(
     players: list[PlayerState],
-    selected_playback_id: Optional[str],
+    selected_identity: Optional[str],
 ) -> Optional[PlayerState]:
-    by_playback_id = {player.playback_id: player for player in players}
-    selected = by_playback_id.get(selected_playback_id or "")
+    by_identity = {player.identity: player for player in players}
+    selected = by_identity.get(selected_identity or "")
 
-    # Keep the current active player while it is still playing. This prevents a
-    # second started deck from replacing the first until the first stops.
     if selected and selected.playing:
         return selected
 
@@ -173,59 +185,43 @@ def choose_player(
     return None
 
 
-def send_state(state: PlayerState) -> None:
+def payload_for_state(state: PlayerState) -> dict[str, object]:
+    payload: dict[str, object] = {
+        "source": state.source,
+        "playing": state.playing,
+    }
+
     if state.source == "spotify":
-        payload = {
-            "spotify_id": state.spotify_id,
-            "playing": state.playing,
-        }
-    else:
-        payload = {
-            "source": "local",
-            "playing": state.playing,
+        payload["spotify_id"] = state.spotify_id
+        return payload
+
+    payload.update(
+        {
             "local_id": state.local_id,
             "title": state.title,
             "artist": state.artist,
             "cover_url": state.cover_url,
         }
+    )
+    return payload
 
+
+def send_state(state: PlayerState) -> None:
+    payload = payload_for_state(state)
     response = requests.post(SERVICE_URL, json=payload, timeout=5)
     response.raise_for_status()
-
-    log_payload = {k: v for k, v in payload.items() if k != "cover_url"}
-    if "cover_url" in payload:
-        log_payload["cover_url"] = "<data url>"
-    print(f"POST {SERVICE_URL}: {json.dumps(log_payload)}", flush=True)
+    print(f"POST {SERVICE_URL}: {json.dumps(payload)}", flush=True)
 
 
 def watch() -> None:
-    selected_playback_id: Optional[str] = None
+    selected_identity: Optional[str] = None
     last_sent: Optional[tuple[Optional[str], Optional[str], bool]] = None
-    last_debug: float = 0.0
 
     while True:
-        players = read_players()
-        state = choose_player(players, selected_playback_id)
-
-        # Debug dump every 5 seconds
-        now = time.monotonic()
-        if now - last_debug >= 5.0:
-            print("--- debug ---", flush=True)
-            for p in players:
-                cover = "<data url>" if p.cover_url else None
-                print(
-                    f"  [{p.source}] playback_id={p.playback_id!r} "
-                    f"playing={p.playing} pos={p.position_ms} seq={p.sequence_number} "
-                    f"spotify_id={p.spotify_id!r} local_id={p.local_id!r} "
-                    f"title={p.title!r} artist={p.artist!r} cover={cover}",
-                    flush=True,
-                )
-            print(f"  selected_playback_id={selected_playback_id!r}", flush=True)
-            # print(f"  chosen={state.playback_id!r if state else None}", flush=True)
-            last_debug = now
+        state = choose_player(get_loaded_tracks(), selected_identity)
 
         if state:
-            selected_playback_id = state.playback_id
+            selected_identity = state.identity
             current = (state.spotify_id, state.local_id, state.playing)
 
             if current != last_sent:

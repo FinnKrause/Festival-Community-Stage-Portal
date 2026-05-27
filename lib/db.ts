@@ -39,7 +39,8 @@ CREATE TABLE IF NOT EXISTS app_state (
 
   enable_autoplay TEXT,
   enable_page TEXT,
-  enable_player TEXT,
+  enable_spotify_player TEXT,
+  enable_rekordbox_player TEXT,
   enable_dj TEXT,
 
   dp_message TEXT,
@@ -50,6 +51,19 @@ CREATE TABLE IF NOT EXISTS app_state (
   dj_message TEXT,
   dj_avatar_url TEXT
 );
+
+CREATE TABLE IF NOT EXISTS rekordbox_player_state (
+  id INTEGER PRIMARY KEY,
+  source TEXT,
+  spotify_id TEXT,
+  local_id TEXT,
+  playing INTEGER,
+  title TEXT,
+  artist TEXT,
+  cover_url TEXT,
+  url TEXT,
+  updated_at INTEGER
+);
 `);
 
 db.prepare(
@@ -58,7 +72,8 @@ INSERT OR IGNORE INTO app_state (
   id, 
   enable_autoplay,
   enable_page, 
-  enable_player, 
+  enable_spotify_player, 
+  enable_rekordbox_player, 
   enable_dj, 
   dp_message, 
   autoplay_message,
@@ -71,6 +86,7 @@ INSERT OR IGNORE INTO app_state (
   'FALSE',
   'TRUE',
   'TRUE',
+  'FALSE',
   'FALSE',
   'Aktuell machen wir leider eine Pause, schaue später wieder vorbei!',
   'Aktuell ist leider kein DJ da, damit ihr aber trotzdem eure Musik hören könnt, wird immer der am höchsten gevotete Song automatisch gespielt. Wir probieren das aus, sollte das missbraucht werden, wird es wieder deaktiviert :)',

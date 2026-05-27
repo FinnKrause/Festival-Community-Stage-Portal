@@ -155,7 +155,8 @@ export default function Admin() {
 
       {/* Spotify Player */}
       <div className="flex-1 min-w-[260px]">
-        <SpotifyPlayer />
+        <SpotifyPlayer mode="spotify" />
+        <SpotifyPlayer mode="rekordbox"></SpotifyPlayer>
       </div>
     </div>
 
@@ -335,10 +336,11 @@ export default function Admin() {
               {/* Toggles */}
               <div className="space-y-2">
                 {[
-                  { id: "enable_autoplay", label: "Auto-Queue" },
-                  { id: "enable_page", label: "Requests Possible" },
-                  { id: "enable_dj", label: "DJ Mode" },
-                  { id: "enable_player", label: "Player Active" },
+                  { id: "enable_autoplay", label: "Enable Autoqueueing" },
+                  { id: "enable_page", label: "Allow Requests" },
+                  { id: "enable_spotify_player", label: "Spotify-Live Active" },
+                  { id: "enable_rekordbox_player", label: "Rekordbox-Live Active" },
+                  { id: "enable_dj", label: "Enable DJ-Screen" },
                 ].map((t) => {
                   const isOn = appState[t.id as keyof typeof appState] === "TRUE";
                   return (
