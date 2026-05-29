@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 export function useAppState() {
   const [settings, setSettings] = useState<AppState>({
     enable_autoplay: "FALSE",
-    enable_page: "TRUE",
-    enable_player: "TRUE",
+    enable_page: "FALSE",
+    enable_spotify_player: "FALSE",
+    enable_rekordbox_player: "FALSE",
     enable_dj: "FALSE",
     dp_message: "",
     autoplay_message: "",
@@ -45,17 +46,32 @@ export function useAppState() {
       updated.enable_autoplay === "TRUE" && settings.enable_autoplay !== "TRUE";
     const pageChangedToTrue =
       updated.enable_page === "TRUE" && settings.enable_page !== "TRUE";
+    // const SpotifyPlayerChangedToTrue =
+    //   updated.enable_spotify_player === "TRUE" &&
+    //   settings.enable_spotify_player !== "TRUE";
+    // const RekordboxPlayerChangedToTrue =
+    //   updated.enable_rekordbox_player === "TRUE" &&
+    //   settings.enable_rekordbox_player !== "TRUE";
 
     if (djChangedToTrue) {
       updated.enable_autoplay = "FALSE";
       updated.enable_page = "FALSE";
-      updated.enable_player = "FALSE";
+      updated.enable_rekordbox_player = "FALSE";
+      updated.enable_spotify_player = "FALSE";
     } else if (autoplayChangedToTrue) {
       updated.enable_page = "TRUE";
       updated.enable_dj = "FALSE";
     } else if (pageChangedToTrue) {
       updated.enable_dj = "FALSE";
     }
+
+    // else if (SpotifyPlayerChangedToTrue) {
+    //   updated.enable_dj = "FALSE";
+    //   updated.enable_rekordbox_player = "FALSE";
+    // } else if (RekordboxPlayerChangedToTrue) {
+    //   updated.enable_dj = "FALSE";
+    //   updated.enable_spotify_player = "FALSE";
+    // }
 
     setSettings(updated);
   };
