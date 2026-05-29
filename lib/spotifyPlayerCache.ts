@@ -5,13 +5,13 @@ type PlayerState = {
   playing: null | {
     title: string;
     artist: string;
-    cover: string | null;
+    cover_url: string | null;
     url: string | null;
   };
   queue: {
     title: string;
     artist: string;
-    cover: string | null;
+    cover_url: string | null;
     url: string | null;
   }[];
 };
@@ -57,7 +57,7 @@ export async function getCachedPlayerState(): Promise<PlayerState> {
         playing = {
           title: t.name,
           artist: t.artists.map((a: any) => a.name).join(", "),
-          cover: t.album?.images?.[0]?.url ?? null,
+          cover_url: t.album?.images?.[0]?.url ?? null,
           url: t.external_urls?.spotify ?? null,
         };
       }
@@ -68,7 +68,7 @@ export async function getCachedPlayerState(): Promise<PlayerState> {
         q.queue?.slice(0, 3).map((t: any) => ({
           title: t.name,
           artist: t.artists.map((a: any) => a.name).join(", "),
-          cover: t.album?.images?.[0]?.url ?? null,
+          cover_url: t.album?.images?.[0]?.url ?? null,
           url: t.external_urls?.spotify ?? null,
         })) || [];
     }

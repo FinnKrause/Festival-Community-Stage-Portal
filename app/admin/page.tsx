@@ -154,10 +154,13 @@ export default function Admin() {
       </div>
 
       {/* Spotify Player */}
-      <div className="flex-1 min-w-[260px]">
-        <SpotifyPlayer mode="spotify" />
+      {(appState.enable_rekordbox_player=="TRUE") && <div className="flex-1 min-w-[260px]">
         <SpotifyPlayer mode="rekordbox"></SpotifyPlayer>
-      </div>
+      </div>}
+      
+      {appState.enable_spotify_player=="TRUE" && <div className="flex-1 min-w-[260px]">
+        <SpotifyPlayer mode="spotify" />
+      </div>}
     </div>
 
     {/* ── MIDDLE ROW: Queue + Settings toggle ── */}

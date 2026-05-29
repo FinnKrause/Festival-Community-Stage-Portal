@@ -6,113 +6,61 @@ import { AnimatedBorder } from "../AnimatedBorder";
 
 const REFRESH = Number(process.env.NEXT_PUBLIC_PLAYER_REFRESH ?? 1000);
 
-type SpotifyPlayerMode = "spotify" | "rekordbox";
-
 type Track = {
   title: string;
   artist: string;
-  cover: string | null;
+  cover_url: string | null;
   url: string | null;
 };
 
 type PlayerData = {
   playing: Track | null;
-  queue: Track[];
-};
-
-type OldPlayerResponse = {
-  playing: Track | null;
   queue?: Track[];
 };
 
-type RekordboxPlayerResponse = {
-  source: "spotify" | "local";
-  spotify_id: string | null;
-  local_id: string | null;
-  playing: boolean;
-  title: string | null;
-  artist: string | null;
-  cover_url: string | null;
-  url: string | null;
-} | null;
-
 type SpotifyPlayerProps = {
-  mode?: SpotifyPlayerMode;
+  mode: "spotify" | "rekordbox";
 };
 
-function normalizePlayerData(
-  mode: SpotifyPlayerMode,
-  data: OldPlayerResponse | RekordboxPlayerResponse,
-): PlayerData {
-  if (mode === "rekordbox") {
-    const rekordboxData = data as RekordboxPlayerResponse;
-
-    return {
-      playing:
-        rekordboxData?.playing === true
-          ? {
-              title: rekordboxData.title ?? "Unknown track",
-              artist: rekordboxData.artist ?? "",
-              cover: rekordboxData.cover_url,
-              url: rekordboxData.url,
-            }
-          : null,
-      queue: [],
-    };
-  }
-
-  const spotifyData = data as OldPlayerResponse;
-
-  return {
-    playing: spotifyData?.playing ?? null,
-    queue: spotifyData?.queue ?? [],
-  };
-}
-
-export default function SpotifyPlayer({ mode = "spotify" }: SpotifyPlayerProps) {
+export default function SpotifyPlayer({ mode }: SpotifyPlayerProps) {
   const [data, setData] = useState<PlayerData | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
 
   const load = useCallback(async () => {
     try {
-      const endpoint =
-        mode === "rekordbox" ? "/api/rekordbox-player" : "/api/player";
+      const endpoint = mode === "rekordbox" ? "/api/rekordbox-player" : "/api/player";
       const res = await fetch(endpoint);
+      if (!res.ok) return;
 
-      if (res.ok) {
-        setData(normalizePlayerData(mode, await res.json()));
-      }
-    } catch {}
+      const json = await res.json();
+      setData(json);
+    } catch {
+      setData(null);
+    }
   }, [mode]);
 
   useEffect(() => {
-    const initial = setTimeout(() => {
-      void load();
-    }, 0);
+    void load();
     const interval = setInterval(() => {
       void load();
     }, REFRESH);
 
-    return () => {
-      clearTimeout(initial);
-      clearInterval(interval);
-    };
+    return () => clearInterval(interval);
   }, [load]);
 
   const playing = data?.playing;
+  const queue = data?.queue ?? [];
+  const canExpand = mode !== "rekordbox" && queue.length > 0;
 
   if (!playing) return null;
 
   return (
     <div
-      onClick={() => setIsExpanded(!isExpanded)}
+      onClick={() => canExpand && setIsExpanded((value) => !value)}
       className="relative w-full overflow-hidden rounded-[2rem] cursor-pointer active:scale-[0.98] transition-transform duration-150"
       style={{ background: "#0f1115" }}
     >
-      {/* Animated border — SVG rect matches the card's border-radius exactly */}
       <AnimatedBorder />
-
-      {/* Accent glow — contained within rounded corners via overflow-hidden on parent */}
       <div
         className="absolute -right-8 -top-8 w-40 h-40 rounded-full pointer-events-none"
         style={{
@@ -121,12 +69,8 @@ export default function SpotifyPlayer({ mode = "spotify" }: SpotifyPlayerProps) 
       />
 
       <div className="relative z-10 p-3.5">
-        {/* Main row */}
         <div className="flex items-center gap-3">
-
-          {/* Cover art with spinning conic ring */}
           <div className="relative flex-shrink-0 w-14 h-14">
-            {/* Spinning conic gradient — extends 3px beyond the image */}
             <div
               className="absolute -inset-[3px] rounded-[15px]"
               style={{
@@ -134,13 +78,12 @@ export default function SpotifyPlayer({ mode = "spotify" }: SpotifyPlayerProps) 
                 animation: "spin 3s linear infinite",
               }}
             />
-            {/* Gap layer — sits between the conic ring and the image, same bg as card */}
             <div
               className="absolute -inset-[1px] rounded-[13px]"
               style={{ background: "#0f1115" }}
             />
             <img
-              src={playing.cover ?? ""}
+              src={playing.cover_url ?? ""}
               className="relative w-14 h-14 rounded-xl object-cover z-10"
               onClick={(e) => {
                 e.stopPropagation();
@@ -152,10 +95,8 @@ export default function SpotifyPlayer({ mode = "spotify" }: SpotifyPlayerProps) 
             />
           </div>
 
-          {/* Track info */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              {/* Equaliser bars - using blue primary, green secondary */}
               <div className="flex gap-[2px] items-end h-2.5">
                 {[
                   "eq 0.55s ease-in-out infinite alternate",
@@ -165,10 +106,10 @@ export default function SpotifyPlayer({ mode = "spotify" }: SpotifyPlayerProps) 
                   <div
                     key={i}
                     className="w-[3px] rounded-sm"
-                    style={{ 
-                      height: i === 1 ? "60%" : "100%", 
+                    style={{
+                      height: i === 1 ? "60%" : "100%",
                       animation: anim,
-                      background: i === 1 ? "#10b981" : "#3b82f6"
+                      background: i === 1 ? "#10b981" : "#3b82f6",
                     }}
                   />
                 ))}
@@ -185,32 +126,37 @@ export default function SpotifyPlayer({ mode = "spotify" }: SpotifyPlayerProps) 
             </p>
           </div>
 
-          {/* Expand chevron */}
-          <div
-            className="flex-shrink-0 p-2 rounded-full transition-transform duration-500"
-            style={{
-              background: "rgba(255,255,255,0.06)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)",
-            }}
-          >
-            <svg
-              width="12" height="12" viewBox="0 0 24 24"
-              fill="none" stroke="rgba(255,255,255,0.3)"
-              strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+          {canExpand ? (
+            <div
+              className="flex-shrink-0 p-2 rounded-full transition-transform duration-500"
+              style={{
+                background: "rgba(255,255,255,0.06)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)",
+              }}
             >
-              <path d="m6 9 6 6 6-6" />
-            </svg>
-          </div>
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="rgba(255,255,255,0.3)"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </div>
+          ) : null}
         </div>
 
-        {/* Expandable queue */}
         <div
           className="grid transition-all duration-500 ease-in-out"
           style={{
-            gridTemplateRows: isExpanded ? "1fr" : "0fr",
-            opacity: isExpanded ? 1 : 0,
-            marginTop: isExpanded ? "12px" : "0px",
+            gridTemplateRows: canExpand && isExpanded ? "1fr" : "0fr",
+            opacity: canExpand && isExpanded ? 1 : 0,
+            marginTop: canExpand && isExpanded ? "12px" : "0px",
           }}
         >
           <div className="overflow-hidden">
@@ -230,8 +176,8 @@ export default function SpotifyPlayer({ mode = "spotify" }: SpotifyPlayerProps) 
               </div>
 
               <div className="space-y-2">
-                {data.queue.length > 0 ? (
-                  data.queue.slice(0, 1).map((song, idx) => (
+                {queue.length > 0 ? (
+                  queue.slice(0, 1).map((song, idx) => (
                     <div key={idx} className="flex items-center gap-3">
                       <div className="text-[9px] font-black w-3" style={{ color: "rgba(255,255,255,0.2)" }}>
                         {idx + 1}

@@ -11,14 +11,14 @@ export type RekordboxPlayerInput = {
 };
 
 export type RekordboxPlayerState = {
-  source: "spotify" | "local";
-  spotify_id: string | null;
-  local_id: string | null;
-  playing: boolean;
-  title: string | null;
-  artist: string | null;
-  cover_url: string | null;
-  url: string | null;
+  playing: {
+    spotify_id: string | null;
+    playing: boolean;
+    title: string | null;
+    artist: string | null;
+    cover_url: string | null;
+    url: string | null;
+  };
   updated_at: number;
 };
 
@@ -52,48 +52,41 @@ async function fetchSpotifyTrack(
   return res.json();
 }
 
-function isSpotifyInput(input: RekordboxPlayerInput) {
-  return input.source === "spotify" || Boolean(input.spotify_id);
-}
-
 export async function setRekordboxPlayerState(
   input: RekordboxPlayerInput,
 ): Promise<RekordboxPlayerState> {
-  const source = isSpotifyInput(input) ? "spotify" : "local";
   let title = input.title ?? null;
   let artist = input.artist ?? null;
   let cover_url = input.cover_url ?? null;
   let url: string | null = null;
 
-  if (source === "spotify" && input.spotify_id) {
-    try {
-      const track = await fetchSpotifyTrack(input.spotify_id);
+  try {
+    const track = await fetchSpotifyTrack(input.spotify_id!);
 
-      title = track.name ?? null;
-      artist =
-        track.artists
-          ?.map((a) => a.name)
-          .filter((name): name is string => Boolean(name))
-          .join(", ") ?? null;
-      cover_url = track.album?.images?.[0]?.url ?? null;
-      url = track.external_urls?.spotify ?? null;
-    } catch (err: unknown) {
-      console.error(
-        "[ERR]: Could not fetch Rekordbox Spotify track metadata:",
-        err instanceof Error ? err.message : String(err),
-      );
-    }
+    title = track.name ?? null;
+    artist =
+      track.artists
+        ?.map((a) => a.name)
+        .filter((name): name is string => Boolean(name))
+        .join(", ") ?? null;
+    cover_url = track.album?.images?.[0]?.url ?? null;
+    url = track.external_urls?.spotify ?? null;
+  } catch (err: unknown) {
+    console.error(
+      "[ERR]: Could not fetch Rekordbox Spotify track metadata:",
+      err instanceof Error ? err.message : String(err),
+    );
   }
 
   state = {
-    source,
-    spotify_id: input.spotify_id ?? null,
-    local_id: input.local_id ?? null,
-    playing: input.playing,
-    title,
-    artist,
-    cover_url,
-    url,
+    playing: {
+      spotify_id: input.spotify_id ?? null,
+      playing: input.playing,
+      title,
+      artist,
+      cover_url,
+      url,
+    },
     updated_at: Date.now(),
   };
 
@@ -101,6 +94,11 @@ export async function setRekordboxPlayerState(
 }
 
 export function getRekordboxPlayerState() {
-  if (state && state?.updated_at + 60000 < new Date().getTime()) state = null;
+  if (state && state?.updated_at + 240000 < new Date().getTime()) {
+    state = null;
+    console.warn(
+      "[WARN]: No recent Rekordbox-Updates during the past 4 minutes. Disabeling the current player",
+    );
+  }
   return state;
 }
